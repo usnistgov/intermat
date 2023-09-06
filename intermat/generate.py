@@ -13,6 +13,7 @@ from jarvis.core.atoms import Atoms
 # TODO:
 # 1) find all possible interfaces i.e. with strain/rotation/tranlation/interlayer distance/terminations/passivation
 # 2) Phase diagram package
+# 3) SrTiO3/Si
 
 
 def get_interface(
