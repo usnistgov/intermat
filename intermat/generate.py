@@ -11,6 +11,7 @@ from jarvis.core.atoms import Atoms
 
 
 # TODO:
+# 0) automate stuff in this paper https://link.springer.com/article/10.1007/s10853-012-6425-z   
 # 1) find all possible interfaces i.e. with strain/rotation/tranlation/interlayer distance/terminations/passivation
 # 2) Phase diagram package
 # 3) SrTiO3/Si
