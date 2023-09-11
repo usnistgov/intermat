@@ -14,6 +14,7 @@ import sys, os
 from jarvis.db.jsonutils import dumpjson
 from jarvis.db.figshare import get_jid_data
 from jarvis.tasks.vasp.vasp import VaspJob
+from jarvis.db.figshare import data as j_data
 
 data = dict(
     PREC="Accurate",
@@ -90,6 +91,25 @@ def get_interface(
         thickness=subs_thickness,
         vacuum=vacuum,
     ).make_surface()
+    tmp = subs_surf
+    coords = subs_surf.frac_coords
+    # print('disp',disp)
+    # print('coords1\n')
+    # print(coords)
+    coords[:, 0] += disp[0]
+    coords[:, 1] += disp[1]
+    # print('coords2\n')
+    # print(coords)
+    elements = subs_surf.elements
+    lattice_mat = subs_surf.lattice_mat
+    new_subs_surf = Atoms(
+        coords=coords,
+        elements=elements,
+        lattice_mat=lattice_mat,
+        cartesian=False,
+    )
+    subs_surf = new_subs_surf
+
     het = make_interface(
         film=film_surf,
         subs=subs_surf,
@@ -104,6 +124,15 @@ def get_interface(
     return het
 
 
+dat = j_data("dft_3d")
+
+
+def get_atoms(jid=""):
+    for i in dat:
+        if i["jid"] == jid:
+            return i
+
+
 def get_hetero_jids(
     jid1="JVASP-664",
     jid2="JVASP-52",
@@ -114,11 +143,11 @@ def get_hetero_jids(
 ):
     from jarvis.db.figshare import get_jid_data
 
-    d1 = get_jid_data(jid1, dataset="dft_3d")
+    d1 = get_atoms(jid1)  # get_jid_data(jid1, dataset="dft_3d")
     m1 = d1["atoms"]
     k1 = d1["kpoint_length_unit"]
 
-    d2 = get_jid_data(jid2, dataset="dft_3d")
+    d2 = get_atoms(jid2)  # get_jid_data(jid2, dataset="dft_3d")
     m2 = d2["atoms"]
     k2 = d2["kpoint_length_unit"]
 
@@ -132,7 +161,7 @@ def get_hetero_jids(
         subs_index=subs_index,
         film_thickness=thickness,
         subs_thickness=thickness,
-        # disp=disp,
+        disp=disp,
     )
 
     return info, max(k1, k2), min(k1, k2)
@@ -152,18 +181,25 @@ def write_jobpy(pyname="job.py", job_json=""):
 jids = [
     "JVASP-816",
     "JVASP-943",
-    "JVASP-867",
-    "JVASP-963",
-    "JVASP-14606",
-    "JVASP-972",
-    "JVASP-825",
-    "JVASP-1002",
+    # "JVASP-867",
+    # "JVASP-963",
+    # "JVASP-14606",
+    # "JVASP-972",
+    # "JVASP-825",
+    # "JVASP-1002",
 ]
 
 film_index = [1, 1, 1]
 subs_index = [1, 1, 1]
 thickness = 15
 disp = [0, 0]
+
+disp_intvl = 0.1
+X, Y = np.mgrid[
+    -0.5 + disp_intvl : 0.5 + disp_intvl : disp_intvl,
+    -0.5 + disp_intvl : 0.5 + disp_intvl : disp_intvl,
+]
+xy = np.vstack((X.flatten(), Y.flatten())).T
 
 
 def test_hetero():
@@ -174,7 +210,11 @@ def test_hetero():
             i = jids[ii]
             j = jids[jj]
             if count < 20000 and i != j and ii > jj:
-                try:
+                # try:
+                for dis in xy:
+                    dis_tmp = dis
+                    dis_tmp[0] = round(dis_tmp[0], 3)
+                    dis_tmp[1] = round(dis_tmp[1], 3)
                     print(i, j)
                     info1, k1, k2 = get_hetero_jids(
                         jid1=i,
@@ -182,6 +222,7 @@ def test_hetero():
                         film_index=film_index,
                         subs_index=subs_index,
                         thickness=thickness,
+                        disp=dis_tmp,
                     )
                     intf = info1["interface"]
                     mis_u1 = info1["mismatch_u"]
@@ -194,6 +235,7 @@ def test_hetero():
                         film_index=film_index,
                         subs_index=subs_index,
                         thickness=thickness,
+                        disp=dis_tmp,
                     )
                     intf = info2["interface"]
                     mis_u2 = info2["mismatch_u"]
@@ -209,7 +251,7 @@ def test_hetero():
                     )
                     if ats.num_atoms < 500:
                         pos = Poscar(ats)
-                        print(pos)
+                        ####print(pos)
                         name = (
                             "Interface-"
                             + i
@@ -224,8 +266,11 @@ def test_hetero():
                             + str(thickness)
                             + "_"
                             + "disp_"
-                            + "_".join(map(str, disp))
+                            + "_".join(map(str, dis))
                         )
+                        print("name", name)
+                        pos_name = "POSCAR-" + name + ".vasp"
+                        ats.write_poscar(filename=pos_name)
                         name_dir = os.path.join(cwd, name)
                         if not os.path.exists(name_dir):
                             os.mkdir(name_dir)
@@ -274,17 +319,17 @@ def test_hetero():
                             + "/job.py"
                         )
 
-                        #Step-4 QSUB
-                        Queue.slurm(
-                           job_line=path,
-                           jobname=name,
-                           walltime="7-00:00:00",
-                           directory=os.getcwd(),
-                           submit_cmd=["sbatch", "submit_job"],
-                        )
+                        # Step-4 QSUB
+                        # Queue.slurm(
+                        #   job_line=path,
+                        #   jobname=name,
+                        #   walltime="7-00:00:00",
+                        #   directory=os.getcwd(),
+                        #   submit_cmd=["sbatch", "submit_job"],
+                        # )
                         os.chdir(cwd)
-                except:
-                    pass
+            # except:
+            #    pass
 
 
 test_hetero()
