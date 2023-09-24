@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="intermat",
-    version="2023.8.1",
+    version="2023.9.1",
     author="Kamal Choudhary",
     author_email="kamal.choudhary@nist.gov",
     description="intermat",
@@ -13,6 +13,7 @@ setuptools.setup(
         "numpy>=1.22.0",
         "scipy>=1.6.3",
         "jarvis-tools>=2021.07.19",
+        "alignn",
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
