@@ -19,6 +19,17 @@ from jarvis.db.figshare import get_jid_data
 from jarvis.core.atoms import Atoms
 
 
+def write_jobpy(pyname="job.py", job_json=""):
+    # job_json = os.getcwd()+'/'+'job.json'
+    f = open(pyname, "w")
+    f.write("from jarvis.tasks.vasp.vasp import VaspJob\n")
+    f.write("from jarvis.db.jsonutils import loadjson\n")
+    f.write('d=loadjson("' + str(job_json) + '")\n')
+    f.write("v=VaspJob.from_dict(d)\n")
+    f.write("v.runjob()\n")
+    f.close()
+
+
 class InterfaceCombi(object):
     """Module to generate interface combinations."""
 
@@ -124,10 +135,7 @@ class InterfaceCombi(object):
                 return atoms
 
     def make_interface(
-        self,
-        film="",
-        subs="",
-        seperation=3.0,
+        self, film="", subs="", seperation=3.0,
     ):
         """
         Use as main function for making interfaces/heterostructures.
@@ -370,9 +378,7 @@ class InterfaceCombi(object):
         ).make_surface()
 
         het = self.make_interface(
-            film=film_surf,
-            subs=subs_surf,
-            seperation=seperation,
+            film=film_surf, subs=subs_surf, seperation=seperation,
         )
         # print('het2\n')
         # print(het['interface'])
@@ -568,8 +574,26 @@ class InterfaceCombi(object):
 
         eam_wads = []
         for i in self.generated_interfaces:
-            film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            film_atoms = Atoms.from_dict(i["film_surf"])
+            subs_atoms = Atoms.from_dict(i["subs_surf"])
+            film_sl = Atoms.from_dict(i["film_sl"])
+            subs_sl = Atoms.from_dict(i["subs_sl"])
+            film_surface_name = i["film_surface_name"]
+            subs_surface_name = i["subs_surface_name"]
+            intf_name = i["interface_name"]
+            film_en = (
+                film_sl.num_atoms / film_atoms.num_atoms
+            ) * atom_to_energy(
+                film_atoms
+            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            subs_en = (
+                subs_sl.num_atoms / subs_atoms.num_atoms
+            ) * atom_to_energy(
+                subs_atoms
+            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+
             intf = Atoms.from_dict(i["generated_interface"])
             # print('intf',intf)
             interface_en = atom_to_energy(intf)
@@ -601,8 +625,27 @@ class InterfaceCombi(object):
 
         matgl_wads = []
         for i in self.generated_interfaces:
-            film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            film_atoms = Atoms.from_dict(i["film_surf"])
+            subs_atoms = Atoms.from_dict(i["subs_surf"])
+            film_sl = Atoms.from_dict(i["film_sl"])
+            subs_sl = Atoms.from_dict(i["subs_sl"])
+            film_surface_name = i["film_surface_name"]
+            subs_surface_name = i["subs_surface_name"]
+            intf_name = i["interface_name"]
+            film_en = (
+                film_sl.num_atoms / film_atoms.num_atoms
+            ) * atom_to_energy(
+                film_atoms
+            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            subs_en = (
+                subs_sl.num_atoms / subs_atoms.num_atoms
+            ) * atom_to_energy(
+                subs_atoms
+            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            intf_name = i["interface_name"]
+
             intf = Atoms.from_dict(i["generated_interface"])
             # print('intf',intf)
             interface_en = atom_to_energy(intf)
@@ -632,10 +675,7 @@ class InterfaceCombi(object):
             num_atoms = atoms.num_atoms
 
             if self.relax:
-                ff = ForceField(
-                    jarvis_atoms=atoms,
-                    model_path=model_path,
-                )
+                ff = ForceField(jarvis_atoms=atoms, model_path=model_path,)
                 opt, energy, fs = ff.optimize_atoms()
             else:
                 atoms = atoms.ase_converter()
@@ -647,8 +687,26 @@ class InterfaceCombi(object):
 
         alignn_wads = []
         for i in self.generated_interfaces:
-            film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            film_atoms = Atoms.from_dict(i["film_surf"])
+            subs_atoms = Atoms.from_dict(i["subs_surf"])
+            film_sl = Atoms.from_dict(i["film_sl"])
+            subs_sl = Atoms.from_dict(i["subs_sl"])
+            film_surface_name = i["film_surface_name"]
+            subs_surface_name = i["subs_surface_name"]
+
+            film_en = (
+                film_sl.num_atoms / film_atoms.num_atoms
+            ) * atom_to_energy(
+                film_atoms
+            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            subs_en = (
+                subs_sl.num_atoms / subs_atoms.num_atoms
+            ) * atom_to_energy(
+                subs_atoms
+            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            intf_name = i["interface_name"]
             intf = Atoms.from_dict(i["generated_interface"])
             # print('intf',intf)
             interface_en = atom_to_energy(intf)
@@ -660,79 +718,152 @@ class InterfaceCombi(object):
         self.wads["alignn_wads"] = alignn_wads
         return alignn_wads
 
-    def calculate(self):
-        if self.calculator["package"] == "vasp":
-            for i in self.generated_interfaces:
-                cwd = self.working_dir
-                name = i["interface_name"]
-                ats = Atoms.from_dict(i["generated_interface"])
-                name_dir = os.path.join(cwd, name)
-                if ats.num_atoms < 500:
-                    pos = Poscar(ats)
-                    ####print(pos)
-                    pos_name = "POSCAR-" + name + ".vasp"
-                    ats.write_poscar(filename=pos_name)
-                    if not os.path.exists(name_dir):
-                        os.mkdir(name_dir)
-                    os.chdir(name_dir)
-                    pos.comment = name
+    def calculate_wad_vasp(
+        self,
+        kp_length=30,
+        copy_files=["/users/knc6/bin/vdw_kernel.bindat"],
+        vasp_cmd="mpirun vasp_std",
+        inc="",
+    ):
+        x = self.generate()
+        if inc == "":
+            data = dict(
+                PREC="Accurate",
+                ISMEAR=0,
+                SIGMA=0.01,
+                IBRION=2,
+                LORBIT=11,
+                GGA="BO",
+                PARAM1=0.1833333333,
+                PARAM2=0.2200000000,
+                LUSE_VDW=".TRUE.",
+                AGGAC=0.0000,
+                EDIFF="1E-7",
+                NSW=500,
+                NELM=500,
+                ISIF=2,
+                ISPIN=2,
+                LCHARG=".TRUE.",
+                LVTOT=".TRUE.",
+                LVHAR=".TRUE.",
+                LWAVE=".FALSE.",
+            )
 
-                    new_symb = []
-                    for ee in ats.elements:
-                        if ee not in new_symb:
-                            new_symb.append(ee)
-                    pot = Potcar(elements=new_symb)
-                    leng = min([k1, k2])
-                    if leng - 25 > 0:
-                        leng = leng - 25
-                    print("leng", k1, k2, leng)
-                    kp = Kpoints3D().automatic_length_mesh(
-                        lattice_mat=ats.lattice_mat,
-                        length=leng,
-                    )
-                    [a, b, c] = kp.kpts[0]
-                    kp = Kpoints3D(kpoints=[[a, b, 1]])
-                    # Step-1 Make VaspJob
-                    v = VaspJob(
-                        poscar=pos,
-                        incar=inc,
-                        potcar=pot,
-                        kpoints=kp,
-                        copy_files=["/users/knc6/bin/vdw_kernel.bindat"],
-                        jobname=name,
-                        vasp_cmd="mpirun vasp_std",
-                        # vasp_cmd="mpirun /users/knc6/VASP/vasp54/src/vasp.5.4.1Dobby/bin/vasp_std",
-                    )
+            inc = Incar(data)
 
-                    count = count + 1
+        def atom_to_energy(atoms=[], jobname=""):
+            # num_atoms = atoms.num_atoms
+            cwd = self.working_dir
+            name_dir = os.path.join(cwd, jobname)
+            if not os.path.exists(name_dir):
+                os.mkdir(name_dir)
+            os.chdir(name_dir)
+            pos = Poscar(atoms)
+            pos_name = "POSCAR-" + jobname + ".vasp"
+            atoms.write_poscar(filename=pos_name)
+            pos.comment = jobname
 
-                    # Step-2 Save on a dict
-                    jname = os.getcwd() + "/" + "VaspJob_" + name + "_job.json"
-                    dumpjson(
-                        data=v.to_dict(),
-                        filename=jname,
-                    )
+            new_symb = []
+            for ee in atoms.elements:
+                if ee not in new_symb:
+                    new_symb.append(ee)
+            pot = Potcar(elements=new_symb)
+            # if leng - 25 > 0:
+            #    leng = leng - 25
+            # print("leng", k1, k2, leng)
+            kp = Kpoints3D().automatic_length_mesh(
+                lattice_mat=atoms.lattice_mat, length=kp_length,
+            )
+            [a, b, c] = kp.kpts[0]
+            if "Surf" in jobname:
+                kp = Kpoints3D(kpoints=[[a, b, 1]])
+            else:
+                kp = Kpoints3D(kpoints=[[a, b, c]])
+            # Step-1 Make VaspJob
+            v = VaspJob(
+                poscar=pos,
+                incar=inc,
+                potcar=pot,
+                kpoints=kp,
+                copy_files=copy_files,
+                jobname=jobname,
+                vasp_cmd=vasp_cmd,
+            )
 
-                    # Step-3 Write jobpy
-                    write_jobpy(job_json=jname)
-                    path = (
-                        "\nmodule load vasp/6.3.1 \nsource ~/anaconda2/envs/my_jarvis/bin/activate my_jarvis \npython "
-                        + os.getcwd()
-                        + "/job.py"
-                    )
+            # Step-2 Save on a dict
+            jname = os.getcwd() + "/" + "VaspJob_" + jobname + "_job.json"
+            dumpjson(
+                data=v.to_dict(), filename=jname,
+            )
 
-                    # Step-4 QSUB
-                    # Queue.slurm(
-                    #   job_line=path,
-                    #   jobname=name,
-                    #   walltime="7-00:00:00",
-                    #   directory=os.getcwd(),
-                    #   submit_cmd=["sbatch", "submit_job"],
-                    # )
-                    os.chdir(cwd)
+            # Step-3 Write jobpy
+            write_jobpy(job_json=jname)
+            path = (
+                "\nmodule load vasp/6.3.1 \nsource ~/anaconda2/envs/my_jarvis/bin/activate my_jarvis \npython "
+                + os.getcwd()
+                + "/job.py"
+            )
+
+            # Step-4 QSUB
+            Queue.slurm(
+                job_line=path,
+                jobname=jobname,
+                walltime="7-00:00:00",
+                directory=os.getcwd(),
+                submit_cmd=["sbatch", "submit_job"],
+            )
+            os.chdir(cwd)
+
+            return energy  # ,forces,stress
+
+        vasp_wads = []
+        for i in self.generated_interfaces:
+            film_atoms = Atoms.from_dict(i["film_surf"])
+            subs_atoms = Atoms.from_dict(i["subs_surf"])
+            film_sl = Atoms.from_dict(i["film_sl"])
+            subs_sl = Atoms.from_dict(i["subs_sl"])
+            film_surface_name = i["film_surface_name"] + "_VASP"
+            subs_surface_name = i["subs_surface_name"] + "_VASP"
+            intf_name = "VASP_" + i["interface_name"] + "_VASP"
+            film_en = (
+                film_sl.num_atoms / film_atoms.num_atoms
+            ) * atom_to_energy(
+                atoms=film_atoms, jobname=film_surface_name
+            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            subs_en = (
+                subs_sl.num_atoms / subs_atoms.num_atoms
+            ) * atom_to_energy(
+                atoms=subs_atoms, jobname=subs_surface_name
+            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+
+            # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            intf = Atoms.from_dict(i["generated_interface"])
+            interface_en = atom_to_energy(atoms=intf, jobname=intf_name)
+
+            m = intf.lattice.matrix
+            area = np.linalg.norm(np.cross(m[0], m[1]))
+
+            wa = 16 * (interface_en - subs_en - film_en) / area
+            vasp_wads.append(wa)
+        self.wads["vasp_wads"] = vasp_wads
+        return vasp_wads
+
         # except:
         #    pass
 
+
+x = InterfaceCombi(
+    # film_mats=[atoms_al],
+    # subs_mats=[atoms_ni],
+    film_indices=[[1, 1, 1]],
+    subs_indices=[[1, 1, 1]],
+    vacuum_interface=2,
+    film_ids=["JVASP-816"],
+    subs_ids=["JVASP-943"],
+    disp_intvl=0.2,
+)
+wads = x.calculate_wad_vasp()
 
 # if __name__=="__main__":
 #     box = [[2.715, 2.715, 0], [0, 2.715, 2.715], [2.715, 0, 2.715]]
