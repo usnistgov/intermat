@@ -11,18 +11,20 @@ from intermat.main import InterfaceCombi
 # import plotly.express as px
 
 
-atoms_al = Atoms.from_dict(
-    get_jid_data(jid="JVASP-816", dataset="dft_3d")["atoms"]
-)
-atoms_ni = Atoms.from_dict(
-    get_jid_data(jid="JVASP-943", dataset="dft_3d")["atoms"]
-)
+# atoms_al = Atoms.from_dict(
+#    get_jid_data(jid="JVASP-816", dataset="dft_3d")["atoms"]
+# )
+# atoms_ni = Atoms.from_dict(
+#    get_jid_data(jid="JVASP-943", dataset="dft_3d")["atoms"]
+# )
 
-pot=os.path.join(os.path.dirname(__file__), "Mishin-Ni-Al-Co-2013.eam.alloy")
+pot = os.path.join(os.path.dirname(__file__), "Mishin-Ni-Al-Co-2013.eam.alloy")
+
+
 def test_eam():
     x = InterfaceCombi(
-        film_mats=[atoms_al],
-        subs_mats=[atoms_ni],
+        # film_mats=[atoms_al],
+        # subs_mats=[atoms_ni],
         film_indices=[[1, 1, 1]],
         subs_indices=[[1, 1, 1]],
         vacuum_interface=2,
@@ -43,10 +45,12 @@ def test_eam():
         X, Y, wads, cmap=cm.coolwarm, linewidth=0, antialiased=False
     )
     fig.colorbar(surf, shrink=0.5, aspect=5)
-    plt.savefig('intmat.png')
+    plt.savefig("intmat.png")
     plt.close()
+
+
 test_eam()
-    # plt.show()
+# plt.show()
 
 
 # fig = go.Figure(data=[go.Surface(z=wads, x=X, y=Y)])

@@ -1,5 +1,4 @@
 """Module to generate interface combinations."""
-
 from jarvis.analysis.interface.zur import ZSLGenerator
 from jarvis.core.atoms import add_atoms, fix_pbc
 from jarvis.core.lattice import Lattice
@@ -25,8 +24,8 @@ class InterfaceCombi(object):
 
     def __init__(
         self,
-        film_mats=[None],
-        subs_mats=[None],
+        film_mats=[],
+        subs_mats=[],
         disp_intvl=0,
         seperations=[2.5],
         film_indices=[[0, 0, 1]],
@@ -52,12 +51,28 @@ class InterfaceCombi(object):
         from_conventional_structure_subs=True,
         relax=False,
         wads={},
+        dataset=[],
+        id_tag="jid",
     ):
         """Initialize class."""
         self.film_mats = film_mats
         self.subs_mats = subs_mats
         self.film_ids = film_ids
         self.subs_ids = subs_ids
+        self.dataset = dataset
+        self.id_tag = id_tag
+        if not film_mats:
+            if not self.dataset:
+                self.dataset = j_data("dft_3d")
+            for i in self.film_ids:
+                atoms = self.get_id_atoms(i)
+                film_mats.append(atoms)
+        if not subs_mats:
+            if not self.dataset:
+                self.dataset = j_data("dft_3d")
+            for i in self.subs_ids:
+                atoms = self.get_id_atoms(i)
+                subs_mats.append(atoms)
         self.disp_intvl = disp_intvl
         self.seperations = seperations
         self.film_indices = film_indices
@@ -101,6 +116,12 @@ class InterfaceCombi(object):
             self.Y = Y
             print("X", X.shape)
             print("Y", Y.shape)
+
+    def get_id_atoms(self, id=""):
+        for i in self.dataset:
+            if i[self.id_tag] == id:
+                atoms = Atoms.from_dict(i["atoms"])
+                return atoms
 
     def make_interface(
         self,
