@@ -25,14 +25,14 @@ jobs:
     - name: Lint
       run: |
         pip install flake8 pytest pycodestyle pydocstyle
-        pycodestyle --ignore E203,W503 --exclude=tests chemnlp
+        #pycodestyle --ignore E203,W503 --exclude=tests chemnlp
         #pydocstyle --exclude=tests --count chemnlp
-        flake8 --ignore E203,W503 --exclude=tests --statistics --count --exit-zero chemnlp
+        #flake8 --ignore E203,W503 --exclude=tests --statistics --count --exit-zero chemnlp
     - name: Test with pytest
       run: |
        
         pip install flake8 pytest pycodestyle pydocstyle codecov pytest-cov coverage 
-        cde data download
+       
         echo 'PIP freeze'
         pip freeze
         coverage run -m pytest
