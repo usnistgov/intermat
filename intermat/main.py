@@ -43,13 +43,15 @@ class InterfaceCombi(object):
         subs_indices=[[0, 0, 1]],
         film_ids=[],
         subs_ids=[],
+        film_kplengths=[30],
+        subs_kplengths=[30],
         film_thicknesses=[8],
         subs_thicknesses=[8],
         rount_digit=3,
         calculator={},
         working_dir=".",
         generated_interfaces=[],
-        vacuum_interface=2.5,
+        vacuum_interface=15,
         max_area_ratio_tol=1.00,
         max_area=300,
         ltol=0.08,
@@ -70,20 +72,28 @@ class InterfaceCombi(object):
         self.subs_mats = subs_mats
         self.film_ids = film_ids
         self.subs_ids = subs_ids
+        self.film_kplengths = film_kplengths
+        self.subs_kplengths = subs_kplengths
         self.dataset = dataset
         self.id_tag = id_tag
         if not film_mats:
+            film_kplengths = []
             if not self.dataset:
                 self.dataset = j_data("dft_3d")
             for i in self.film_ids:
-                atoms = self.get_id_atoms(i)
+                atoms = self.get_id_atoms(i)["atoms"]
                 film_mats.append(atoms)
+                film_kplengths.append(self.get_id_atoms(i)["kp_length"])
+            self.film_kplengths = film_kplengths
         if not subs_mats:
+            subs_kplengths = []
             if not self.dataset:
                 self.dataset = j_data("dft_3d")
             for i in self.subs_ids:
-                atoms = self.get_id_atoms(i)
+                atoms = self.get_id_atoms(i)["atoms"]
                 subs_mats.append(atoms)
+                subs_kplengths.append(self.get_id_atoms(i)["kp_length"])
+            self.subs_kplengths = subs_kplengths
         self.disp_intvl = disp_intvl
         self.seperations = seperations
         self.film_indices = film_indices
@@ -132,7 +142,10 @@ class InterfaceCombi(object):
         for i in self.dataset:
             if i[self.id_tag] == id:
                 atoms = Atoms.from_dict(i["atoms"])
-                return atoms
+                info = {}
+                info["atoms"] = atoms
+                info["kp_length"] = i["kpoint_length_unit"]
+                return info
 
     def make_interface(
         self, film="", subs="", seperation=3.0,
@@ -408,6 +421,8 @@ class InterfaceCombi(object):
                                         seperation = round(
                                             seperation, self.rount_digit
                                         )
+                                        film_kplength = self.film_kplengths[jj]
+                                        subs_kplength = self.subs_kplengths[ii]
                                         dis_tmp[0] = round(
                                             dis_tmp[0], self.rount_digit
                                         )
@@ -550,6 +565,12 @@ class InterfaceCombi(object):
                                         chosen_info["interface"] = chosen_info[
                                             "interface"
                                         ].to_dict()
+                                        chosen_info[
+                                            "film_kplength"
+                                        ] = film_kplength
+                                        chosen_info[
+                                            "subs_kplength"
+                                        ] = subs_kplength
                                         gen_intfs.append(chosen_info)
 
                                         # print("interface2", new_intf)
@@ -585,18 +606,14 @@ class InterfaceCombi(object):
             intf_name = i["interface_name"]
             film_en = (
                 film_sl.num_atoms / film_atoms.num_atoms
-            ) * atom_to_energy(
-                film_atoms
-            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            ) * atom_to_energy(atoms=film_atoms, kp_length=i["film_kplength"])
             subs_en = (
                 subs_sl.num_atoms / subs_atoms.num_atoms
-            ) * atom_to_energy(
-                subs_atoms
-            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-
+            ) * atom_to_energy(atoms=subs_atoms, kp_length=i["subs_kplength"])
+            intf_kplength = max(i["film_kplength"], i["subs_kplength"])
             intf = Atoms.from_dict(i["generated_interface"])
             # print('intf',intf)
-            interface_en = atom_to_energy(intf)
+            interface_en = atom_to_energy(atoms=intf, kp_length=intf_kplength)
             m = intf.lattice.matrix
             area = np.linalg.norm(np.cross(m[0], m[1]))
 
@@ -720,10 +737,12 @@ class InterfaceCombi(object):
 
     def calculate_wad_vasp(
         self,
-        kp_length=30,
         copy_files=["/users/knc6/bin/vdw_kernel.bindat"],
         vasp_cmd="mpirun vasp_std",
         inc="",
+        film_kp_length=30,
+        subs_kp_length=30,
+        sub_job=True,
     ):
         x = self.generate()
         if inc == "":
@@ -747,13 +766,15 @@ class InterfaceCombi(object):
                 LVTOT=".TRUE.",
                 LVHAR=".TRUE.",
                 LWAVE=".FALSE.",
+                LREAL=".FALSE.",
             )
 
             inc = Incar(data)
 
-        def atom_to_energy(atoms=[], jobname=""):
+        def atom_to_energy(atoms=[], jobname="", kp_length=30):
             # num_atoms = atoms.num_atoms
-            cwd = self.working_dir
+            # cwd = self.working_dir
+            cwd = os.getcwd()
             name_dir = os.path.join(cwd, jobname)
             if not os.path.exists(name_dir):
                 os.mkdir(name_dir)
@@ -775,10 +796,11 @@ class InterfaceCombi(object):
                 lattice_mat=atoms.lattice_mat, length=kp_length,
             )
             [a, b, c] = kp.kpts[0]
-            if "Surf" in jobname:
-                kp = Kpoints3D(kpoints=[[a, b, 1]])
-            else:
-                kp = Kpoints3D(kpoints=[[a, b, c]])
+            # if "Surf" in jobname:
+            #    kp = Kpoints3D(kpoints=[[a, b, 1]])
+            # else:
+            #    kp = Kpoints3D(kpoints=[[a, b, c]])
+            kp = Kpoints3D(kpoints=[[a, b, 1]])
             # Step-1 Make VaspJob
             v = VaspJob(
                 poscar=pos,
@@ -803,15 +825,24 @@ class InterfaceCombi(object):
                 + os.getcwd()
                 + "/job.py"
             )
-
             # Step-4 QSUB
-            Queue.slurm(
-                job_line=path,
-                jobname=jobname,
-                walltime="7-00:00:00",
-                directory=os.getcwd(),
-                submit_cmd=["sbatch", "submit_job"],
-            )
+            if sub_job:
+                Queue.slurm(
+                    job_line=path,
+                    jobname=jobname,
+                    walltime="7-00:00:00",
+                    directory=os.getcwd(),
+                    submit_cmd=["sbatch", "submit_job"],
+                )
+            out = os.getcwd() + "/" + jobname + "/Outcar"
+            print("out", out)
+            energy = -999
+            if os.path.exists(out):
+                if Outcar(out).converged:
+                    vrun_file = os.getcwd() + "/" + jobname + "/vasprun.xml"
+                    vrun = Vasprun(vrun_file)
+                    energy = float(vrun.final_energy)
+
             os.chdir(cwd)
 
             return energy  # ,forces,stress
@@ -828,18 +859,24 @@ class InterfaceCombi(object):
             film_en = (
                 film_sl.num_atoms / film_atoms.num_atoms
             ) * atom_to_energy(
-                atoms=film_atoms, jobname=film_surface_name
+                atoms=film_atoms,
+                jobname=film_surface_name,
+                kp_length=film_kp_length,
             )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
             subs_en = (
                 subs_sl.num_atoms / subs_atoms.num_atoms
             ) * atom_to_energy(
-                atoms=subs_atoms, jobname=subs_surface_name
+                atoms=subs_atoms,
+                jobname=subs_surface_name,
+                kp_length=subs_kp_length,
             )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-
+            intf_kplength = max(film_kp_length, subs_kp_length)
             # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
             # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
             intf = Atoms.from_dict(i["generated_interface"])
-            interface_en = atom_to_energy(atoms=intf, jobname=intf_name)
+            interface_en = atom_to_energy(
+                atoms=intf, jobname=intf_name, kp_length=intf_kplength
+            )
 
             m = intf.lattice.matrix
             area = np.linalg.norm(np.cross(m[0], m[1]))
@@ -861,7 +898,7 @@ x = InterfaceCombi(
     vacuum_interface=2,
     film_ids=["JVASP-816"],
     subs_ids=["JVASP-943"],
-    disp_intvl=0.2,
+    disp_intvl=0.0,
 )
 wads = x.calculate_wad_vasp()
 
