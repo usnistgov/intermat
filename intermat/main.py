@@ -17,6 +17,7 @@ from jarvis.analysis.structure.spacegroup import (
 from jarvis.analysis.defects.surface import Surface
 from jarvis.db.figshare import get_jid_data
 from jarvis.core.atoms import Atoms
+import pandas as pd
 
 
 def write_jobpy(pyname="job.py", job_json=""):
@@ -45,13 +46,13 @@ class InterfaceCombi(object):
         subs_ids=[],
         film_kplengths=[30],
         subs_kplengths=[30],
-        film_thicknesses=[8],
-        subs_thicknesses=[8],
+        film_thicknesses=[15],
+        subs_thicknesses=[15],
         rount_digit=3,
         calculator={},
         working_dir=".",
         generated_interfaces=[],
-        vacuum_interface=15,
+        vacuum_interface=8,
         max_area_ratio_tol=1.00,
         max_area=300,
         ltol=0.08,
@@ -371,7 +372,7 @@ class InterfaceCombi(object):
         film_thickness=10,
         subs_thickness=10,
         seperation=2.5,
-        vacuum=15.0,
+        vacuum=12.0,
     ):
         """Get interface."""
         info = {}
@@ -826,7 +827,11 @@ class InterfaceCombi(object):
                 + "/job.py"
             )
             # Step-4 QSUB
-            if sub_job:
+            # jobid=os.getcwd() + "/" + jobname + "/jobid"
+            jobid = os.getcwd() + "/jobid"
+            print("jobid", jobid)
+            sub_job = False
+            if sub_job and not os.path.exists(jobid):
                 Queue.slurm(
                     job_line=path,
                     jobname=jobname,
@@ -834,6 +839,8 @@ class InterfaceCombi(object):
                     directory=os.getcwd(),
                     submit_cmd=["sbatch", "submit_job"],
                 )
+            else:
+                print("jobid exists", jobid)
             out = os.getcwd() + "/" + jobname + "/Outcar"
             print("out", out)
             energy = -999
@@ -890,17 +897,63 @@ class InterfaceCombi(object):
         #    pass
 
 
+df = pd.read_csv("Interface_metals.csv")
+film_ids = []
+subs_ids = []
+film_indices = []
+subs_indices = []
+
+for i, ii in df.iterrows():
+    # try:
+    film_ids.append("JVASP-" + str(ii["JARVISID-Film"]))
+    subs_ids.append("JVASP-" + str(ii["JARVISID-Subs"]))
+    film_indices.append(
+        [
+            int(ii["Film-miller"][1]),
+            int(ii["Film-miller"][2]),
+            int(ii["Film-miller"][3]),
+        ]
+    )
+    subs_indices.append(
+        [
+            int(ii["Subs-miller"][1]),
+            int(ii["Subs-miller"][2]),
+            int(ii["Subs-miller"][3]),
+        ]
+    )
+    print(film_indices[-1], subs_indices[-1], film_ids[-1], subs_ids[-1])
+    x = InterfaceCombi(
+        film_indices=film_indices[-1],
+        subs_indices=subs_indices[-1],
+        film_ids=film_ids[-1],
+        subs_ids=subs_ids[-1],
+        disp_intvl=0.0,
+    )
+    wads = x.calculate_wad_vasp()
+# except:
+#  pass
+import sys
+
+sys.exit()
 x = InterfaceCombi(
     # film_mats=[atoms_al],
     # subs_mats=[atoms_ni],
     film_indices=[[1, 1, 1]],
     subs_indices=[[1, 1, 1]],
-    vacuum_interface=2,
     film_ids=["JVASP-816"],
-    subs_ids=["JVASP-943"],
+    subs_ids=["JVASP-867"],
+    # subs_ids=["JVASP-943"],
     disp_intvl=0.0,
 )
 wads = x.calculate_wad_vasp()
+
+import pandas as pd
+
+df = pd.read_csv("Interface_metals.csv")
+film_ids = []
+subs_ids = []
+film_indices = []
+subs_indices = []
 
 # if __name__=="__main__":
 #     box = [[2.715, 2.715, 0], [0, 2.715, 2.715], [2.715, 0, 2.715]]
