@@ -77,24 +77,30 @@ class InterfaceCombi(object):
         self.subs_kplengths = subs_kplengths
         self.dataset = dataset
         self.id_tag = id_tag
+        if not self.dataset:
+            self.dataset = j_data("dft_3d")
         if not film_mats:
+            film_mats = []
             film_kplengths = []
-            if not self.dataset:
-                self.dataset = j_data("dft_3d")
             for i in self.film_ids:
                 atoms = self.get_id_atoms(i)["atoms"]
                 film_mats.append(atoms)
                 film_kplengths.append(self.get_id_atoms(i)["kp_length"])
             self.film_kplengths = film_kplengths
+            self.film_mats = film_mats
         if not subs_mats:
+            subs_mats = []
             subs_kplengths = []
-            if not self.dataset:
-                self.dataset = j_data("dft_3d")
             for i in self.subs_ids:
                 atoms = self.get_id_atoms(i)["atoms"]
                 subs_mats.append(atoms)
                 subs_kplengths.append(self.get_id_atoms(i)["kp_length"])
             self.subs_kplengths = subs_kplengths
+            self.subs_mats = subs_mats
+        print("self.film_ids", self.film_ids)
+        print("self.subs_ids", self.subs_ids)
+        print("self.film_mats", self.film_mats)
+        print("self.subs_mats", self.subs_mats)
         self.disp_intvl = disp_intvl
         self.seperations = seperations
         self.film_indices = film_indices
@@ -404,8 +410,8 @@ class InterfaceCombi(object):
         count = 0
         cwd = self.working_dir
         gen_intfs = []
-        for ii, i in enumerate(self.subs_mats):
-            for jj, j in enumerate(self.film_mats):
+        for ii, i in enumerate(self.film_mats):
+            for jj, j in enumerate(self.subs_mats):
                 for seperation in self.seperations:
                     for film_index in self.film_indices:
                         for subs_index in self.subs_indices:
@@ -422,8 +428,8 @@ class InterfaceCombi(object):
                                         seperation = round(
                                             seperation, self.rount_digit
                                         )
-                                        film_kplength = self.film_kplengths[jj]
-                                        subs_kplength = self.subs_kplengths[ii]
+                                        film_kplength = self.film_kplengths[ii]
+                                        subs_kplength = self.subs_kplengths[jj]
                                         dis_tmp[0] = round(
                                             dis_tmp[0], self.rount_digit
                                         )
@@ -440,14 +446,14 @@ class InterfaceCombi(object):
                                         #     subs_index,
                                         # )
                                         if not self.subs_ids:
-                                            tmp_i = str(ii)
-                                        else:
-                                            tmp_i = self.subs_ids[ii]
-
-                                        if not self.film_ids:
                                             tmp_j = str(jj)
                                         else:
-                                            tmp_j = self.film_ids[ii]
+                                            tmp_j = self.subs_ids[jj]
+
+                                        if not self.film_ids:
+                                            tmp_i = str(ii)
+                                        else:
+                                            tmp_i = self.film_ids[ii]
                                         name = (
                                             "Interface-"
                                             + str(tmp_i)
@@ -481,6 +487,7 @@ class InterfaceCombi(object):
                                             seperation=seperation,
                                         )
 
+                                        """
                                         intf = info1["interface"]
                                         mis_u1 = info1["mismatch_u"]
                                         mis_v1 = info1["mismatch_v"]
@@ -507,6 +514,8 @@ class InterfaceCombi(object):
                                             chosen_info = info1
                                         else:
                                             chosen_info = info2
+                                        """
+                                        chosen_info = info1
                                         ats = chosen_info["interface"]
                                         film_surface_name = (
                                             "Surface-"
@@ -772,7 +781,13 @@ class InterfaceCombi(object):
 
             inc = Incar(data)
 
-        def atom_to_energy(atoms=[], jobname="", kp_length=30):
+        def atom_to_energy(
+            atoms=[],
+            jobname="",
+            kp_length=30,
+            extra_lines="\n module load vasp/6.3.1\n"
+            + "source ~/anaconda2/envs/my_jarvis/bin/activate my_jarvis\n",
+        ):
             # num_atoms = atoms.num_atoms
             # cwd = self.working_dir
             cwd = os.getcwd()
@@ -822,7 +837,10 @@ class InterfaceCombi(object):
             # Step-3 Write jobpy
             write_jobpy(job_json=jname)
             path = (
-                "\nmodule load vasp/6.3.1 \nsource ~/anaconda2/envs/my_jarvis/bin/activate my_jarvis \npython "
+                # "\n module load vasp/6.3.1\n"
+                # + "source ~/anaconda2/envs/my_jarvis/bin/activate my_jarvis\n"
+                extra_lines
+                + "python "
                 + os.getcwd()
                 + "/job.py"
             )
@@ -830,7 +848,6 @@ class InterfaceCombi(object):
             # jobid=os.getcwd() + "/" + jobname + "/jobid"
             jobid = os.getcwd() + "/jobid"
             print("jobid", jobid)
-            sub_job = False
             if sub_job and not os.path.exists(jobid):
                 Queue.slurm(
                     job_line=path,
@@ -897,82 +914,170 @@ class InterfaceCombi(object):
         #    pass
 
 
-df = pd.read_csv("Interface_metals.csv")
-film_ids = []
-subs_ids = []
-film_indices = []
-subs_indices = []
+def metal_metal_interface_workflow():
+    df = pd.read_csv("Interface_metals.csv")
+    dataset = j_data("dft_3d")
 
-for i, ii in df.iterrows():
-    # try:
-    film_ids.append("JVASP-" + str(ii["JARVISID-Film"]))
-    subs_ids.append("JVASP-" + str(ii["JARVISID-Subs"]))
-    film_indices.append(
-        [
-            int(ii["Film-miller"][1]),
-            int(ii["Film-miller"][2]),
-            int(ii["Film-miller"][3]),
-        ]
-    )
-    subs_indices.append(
-        [
-            int(ii["Subs-miller"][1]),
-            int(ii["Subs-miller"][2]),
-            int(ii["Subs-miller"][3]),
-        ]
-    )
-    print(film_indices[-1], subs_indices[-1], film_ids[-1], subs_ids[-1])
+    for i, ii in df.iterrows():
+        film_ids = []
+        subs_ids = []
+        film_indices = []
+        subs_indices = []
+        # try:
+        film_ids.append("JVASP-" + str(ii["JARVISID-Film"]))
+        subs_ids.append("JVASP-" + str(ii["JARVISID-Subs"]))
+        film_indices.append(
+            [
+                int(ii["Film-miller"][1]),
+                int(ii["Film-miller"][2]),
+                int(ii["Film-miller"][3]),
+            ]
+        )
+        subs_indices.append(
+            [
+                int(ii["Subs-miller"][1]),
+                int(ii["Subs-miller"][2]),
+                int(ii["Subs-miller"][3]),
+            ]
+        )
+        print(film_indices[-1], subs_indices[-1], film_ids[-1], subs_ids[-1])
+        x = InterfaceCombi(
+            dataset=dataset,
+            film_indices=film_indices,
+            subs_indices=subs_indices,
+            film_ids=film_ids,
+            subs_ids=subs_ids,
+            disp_intvl=0.0,
+        )
+        wads = x.calculate_wad_vasp(sub_job=True)
+    # except:
+    #  pass
+
+
+def semicon_mat_interface_workflow():
+    dataset = j_data("dft_3d")
+    # Cu(867),Al(816),Ni(943),Pt(972),Cu(816),Ti(1029),Pd(963),Au(825),Ag(813),Hf(802), Nb(934)
+    combinations = [
+        ["JVASP-1002", "JVASP-867", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-867", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-867", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-867", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-867", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-867", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-867", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-816", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-816", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-816", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-816", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-816", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-816", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-816", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-943", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-943", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-943", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-943", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-943", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-943", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-943", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-972", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-972", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-972", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-972", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-972", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-972", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-972", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-867", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-867", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-867", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-867", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-867", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-867", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-867", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1029", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1029", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1029", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1029", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1029", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1029", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1029", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-963", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-963", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-963", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-867", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-963", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-963", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-963", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-825", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-825", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-825", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-825", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-825", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-825", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-825", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-813", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-813", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-813", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-813", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-813", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-813", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-813", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-802", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-802", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-802", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-802", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-802", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-802", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-802", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-41", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-41", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-41", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-41", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-41", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-41", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-41", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-8158", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-8158", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-8158", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-8158", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-8158", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-8158", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-8158", [1, 1, 0], [1, 1, 0]],
+    ]
+
+    for i in combinations:
+        x = InterfaceCombi(
+            dataset=dataset,
+            film_indices=[i[2]],
+            subs_indices=[i[3]],
+            film_ids=[i[0]],
+            subs_ids=[i[1]],
+            disp_intvl=0.0,
+        )
+        wads = x.calculate_wad_vasp(sub_job=True)
+
+
+def quick_test():
+    box = [[2.715, 2.715, 0], [0, 2.715, 2.715], [2.715, 0, 2.715]]
+    coords = [[0, 0, 0], [0.25, 0.2, 0.25]]
+    elements = ["Si", "Si"]
+    atoms_si = Atoms(lattice_mat=box, coords=coords, elements=elements)
+
+    box = [[1.7985, 1.7985, 0], [0, 1.7985, 1.7985], [1.7985, 0, 1.7985]]
+    coords = [[0, 0, 0]]
+    elements = ["Ag"]
+    atoms_cu = Atoms(lattice_mat=box, coords=coords, elements=elements)
     x = InterfaceCombi(
-        film_indices=film_indices[-1],
-        subs_indices=subs_indices[-1],
-        film_ids=film_ids[-1],
-        subs_ids=subs_ids[-1],
-        disp_intvl=0.0,
-    )
-    wads = x.calculate_wad_vasp()
-# except:
-#  pass
-import sys
+        film_mats=[atoms_cu],
+        subs_mats=[atoms_si],
+        film_indices=[[0, 0, 1]],
+        subs_indices=[[0, 0, 1]],
+        vacuum_interface=2,
+        film_ids=["JVASP-867"],
+        subs_ids=["JVASP-816"],
+        # disp_intvl=0.1,
+    ).generate()
 
-sys.exit()
-x = InterfaceCombi(
-    # film_mats=[atoms_al],
-    # subs_mats=[atoms_ni],
-    film_indices=[[1, 1, 1]],
-    subs_indices=[[1, 1, 1]],
-    film_ids=["JVASP-816"],
-    subs_ids=["JVASP-867"],
-    # subs_ids=["JVASP-943"],
-    disp_intvl=0.0,
-)
-wads = x.calculate_wad_vasp()
 
-import pandas as pd
-
-df = pd.read_csv("Interface_metals.csv")
-film_ids = []
-subs_ids = []
-film_indices = []
-subs_indices = []
-
-# if __name__=="__main__":
-#     box = [[2.715, 2.715, 0], [0, 2.715, 2.715], [2.715, 0, 2.715]]
-#     coords = [[0, 0, 0], [0.25, 0.2, 0.25]]
-#     elements = ["Si", "Si"]
-#     atoms_si = Atoms(lattice_mat=box, coords=coords, elements=elements)
-
-#     box = [[1.7985, 1.7985, 0], [0, 1.7985, 1.7985], [1.7985, 0, 1.7985]]
-#     coords = [[0, 0, 0]]
-#     elements = ["Ag"]
-#     atoms_cu = Atoms(lattice_mat=box, coords=coords, elements=elements)
-#     x = InterfaceCombi(
-#         film_mats=[atoms_cu],
-#         subs_mats=[atoms_si],
-#         film_indices=[[0,0,1]],
-#         subs_indices=[[0,0,1]],
-#         vacuum_interface=2,
-#         film_ids=['JVASP-867'],
-#         subs_ids=['JVASP-816'],
-#         #disp_intvl=0.1,
-
-#     ).generate()
+if __name__ == "__main__":
+    # semicon_mat_interface_workflow()
+    metal_metal_interface_workflow()
