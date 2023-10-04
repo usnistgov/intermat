@@ -46,8 +46,8 @@ class InterfaceCombi(object):
         subs_ids=[],
         film_kplengths=[30],
         subs_kplengths=[30],
-        film_thicknesses=[15],
-        subs_thicknesses=[15],
+        film_thicknesses=[16],
+        subs_thicknesses=[16],
         rount_digit=3,
         calculator={},
         working_dir=".",
@@ -155,7 +155,10 @@ class InterfaceCombi(object):
                 return info
 
     def make_interface(
-        self, film="", subs="", seperation=3.0,
+        self,
+        film="",
+        subs="",
+        seperation=3.0,
     ):
         """
         Use as main function for making interfaces/heterostructures.
@@ -398,7 +401,9 @@ class InterfaceCombi(object):
         ).make_surface()
 
         het = self.make_interface(
-            film=film_surf, subs=subs_surf, seperation=seperation,
+            film=film_surf,
+            subs=subs_surf,
+            seperation=seperation,
         )
         # print('het2\n')
         # print(het['interface'])
@@ -520,19 +525,21 @@ class InterfaceCombi(object):
                                         film_surface_name = (
                                             "Surface-"
                                             + str(tmp_i)
-                                            + "_"
-                                            + "film_miller_"
+                                            + "_miller_"
+                                            # + "film_miller_"
                                             + "_".join(map(str, film_index))
-                                            + "_film_thickness_"
+                                            + "_thickness_"
+                                            # + "_film_thickness_"
                                             + str(film_thickness)
                                         )
                                         subs_surface_name = (
                                             "Surface-"
                                             + str(tmp_j)
-                                            + "_"
-                                            + "subs_miller_"
+                                            + "_miller_"
+                                            # + "subs_miller_"
                                             + "_".join(map(str, subs_index))
-                                            + "_subs_thickness_"
+                                            + "_thickness_"
+                                            # + "_subs_thickness_"
                                             + str(subs_thickness)
                                         )
                                         chosen_info["interface_name"] = name
@@ -684,6 +691,48 @@ class InterfaceCombi(object):
         self.wads["matgl_wads"] = matgl_wads
         return matgl_wads
 
+    def calculate_wad_ewald(self):
+        x = self.generate()
+        from ewald import ewaldsum
+
+        def atom_to_energy(atoms):
+            ew = ewaldsum(atoms)
+            energy = ew.get_ewaldsum()
+            return energy  # ,forces,stress
+
+        ew_wads = []
+        for i in self.generated_interfaces:
+            # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            film_atoms = Atoms.from_dict(i["film_surf"])
+            subs_atoms = Atoms.from_dict(i["subs_surf"])
+            film_sl = Atoms.from_dict(i["film_sl"])
+            subs_sl = Atoms.from_dict(i["subs_sl"])
+            film_surface_name = i["film_surface_name"]
+            subs_surface_name = i["subs_surface_name"]
+
+            film_en = (
+                film_sl.num_atoms / film_atoms.num_atoms
+            ) * atom_to_energy(
+                film_atoms
+            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
+            subs_en = (
+                subs_sl.num_atoms / subs_atoms.num_atoms
+            ) * atom_to_energy(
+                subs_atoms
+            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
+            intf_name = i["interface_name"]
+            intf = Atoms.from_dict(i["generated_interface"])
+            # print('intf',intf)
+            interface_en = atom_to_energy(intf)
+            m = intf.lattice.matrix
+            area = np.linalg.norm(np.cross(m[0], m[1]))
+
+            wa = 16 * (interface_en - subs_en - film_en) / area
+            ew_wads.append(wa)
+        self.wads["ew_wads"] = ew_wads
+        return ew_wads
+
     def calculate_wad_alignn(self, model_path=""):
         x = self.generate()
         from alignn.ff.ff import (
@@ -702,7 +751,10 @@ class InterfaceCombi(object):
             num_atoms = atoms.num_atoms
 
             if self.relax:
-                ff = ForceField(jarvis_atoms=atoms, model_path=model_path,)
+                ff = ForceField(
+                    jarvis_atoms=atoms,
+                    model_path=model_path,
+                )
                 opt, energy, fs = ff.optimize_atoms()
             else:
                 atoms = atoms.ase_converter()
@@ -753,13 +805,14 @@ class InterfaceCombi(object):
         film_kp_length=30,
         subs_kp_length=30,
         sub_job=True,
+        index=None,
     ):
         x = self.generate()
         if inc == "":
             data = dict(
                 PREC="Accurate",
                 ISMEAR=0,
-                SIGMA=0.01,
+                SIGMA=0.05,
                 IBRION=2,
                 LORBIT=11,
                 GGA="BO",
@@ -767,7 +820,7 @@ class InterfaceCombi(object):
                 PARAM2=0.2200000000,
                 LUSE_VDW=".TRUE.",
                 AGGAC=0.0000,
-                EDIFF="1E-7",
+                EDIFF="1E-6",
                 NSW=500,
                 NELM=500,
                 ISIF=2,
@@ -776,7 +829,7 @@ class InterfaceCombi(object):
                 LVTOT=".TRUE.",
                 LVHAR=".TRUE.",
                 LWAVE=".FALSE.",
-                LREAL=".FALSE.",
+                LREAL="Auto",
             )
 
             inc = Incar(data)
@@ -809,7 +862,8 @@ class InterfaceCombi(object):
             #    leng = leng - 25
             # print("leng", k1, k2, leng)
             kp = Kpoints3D().automatic_length_mesh(
-                lattice_mat=atoms.lattice_mat, length=kp_length,
+                lattice_mat=atoms.lattice_mat,
+                length=kp_length,
             )
             [a, b, c] = kp.kpts[0]
             # if "Surf" in jobname:
@@ -831,7 +885,8 @@ class InterfaceCombi(object):
             # Step-2 Save on a dict
             jname = os.getcwd() + "/" + "VaspJob_" + jobname + "_job.json"
             dumpjson(
-                data=v.to_dict(), filename=jname,
+                data=v.to_dict(),
+                filename=jname,
             )
 
             # Step-3 Write jobpy
@@ -855,6 +910,7 @@ class InterfaceCombi(object):
                     walltime="7-00:00:00",
                     directory=os.getcwd(),
                     submit_cmd=["sbatch", "submit_job"],
+                    # queue="coin",
                 )
             else:
                 print("jobid exists", jobid)
@@ -872,7 +928,12 @@ class InterfaceCombi(object):
             return energy  # ,forces,stress
 
         vasp_wads = []
-        for i in self.generated_interfaces:
+        if index is None:
+            generated_interfaces = self.generated_interfaces
+        else:
+            generated_interfaces = [self.generated_interfaces[index]]
+        for i in generated_interfaces:
+            # for i in self.generated_interfaces:
             film_atoms = Atoms.from_dict(i["film_surf"])
             subs_atoms = Atoms.from_dict(i["subs_surf"])
             film_sl = Atoms.from_dict(i["film_sl"])
@@ -915,9 +976,11 @@ class InterfaceCombi(object):
 
 
 def metal_metal_interface_workflow():
-    df = pd.read_csv("Interface_metals.csv")
-    dataset = j_data("dft_3d")
-
+    df = pd.read_csv("Interface.csv")
+    # df = pd.read_csv("Interface_metals.csv")
+    dataset1 = j_data("dft_3d")
+    dataset2 = j_data("dft_2d")
+    dataset = dataset1 + dataset2
     for i, ii in df.iterrows():
         film_ids = []
         subs_ids = []
@@ -947,9 +1010,13 @@ def metal_metal_interface_workflow():
             subs_indices=subs_indices,
             film_ids=film_ids,
             subs_ids=subs_ids,
-            disp_intvl=0.0,
+            disp_intvl=0.1,
         )
-        wads = x.calculate_wad_vasp(sub_job=True)
+        wads = x.calculate_wad_ewald()
+        wads = np.array(x.wads["ew_wads"])
+        index = np.argmin(wads)
+        wads = x.calculate_wad_vasp(sub_job=True, index=index)
+        # wads = x.calculate_wad_vasp(sub_job=True)
     # except:
     #  pass
 
@@ -1051,9 +1118,13 @@ def semicon_mat_interface_workflow():
             subs_indices=[i[3]],
             film_ids=[i[0]],
             subs_ids=[i[1]],
-            disp_intvl=0.0,
+            disp_intvl=0.1,
         )
-        wads = x.calculate_wad_vasp(sub_job=True)
+        wads = x.calculate_wad_ewald()
+        wads = np.array(x.wads["ew_wads"])
+        index = np.argmin(wads)
+        wads = x.calculate_wad_vasp(sub_job=True, index=index)
+        # wads = x.calculate_wad_vasp(sub_job=True)
 
 
 def quick_test():
@@ -1080,4 +1151,34 @@ def quick_test():
 
 if __name__ == "__main__":
     # semicon_mat_interface_workflow()
-    metal_metal_interface_workflow()
+    # metal_metal_interface_workflow()
+    # print()
+    dataset = j_data("dft_3d")
+    x = InterfaceCombi(
+        dataset=dataset,
+        film_indices=[[0, 0, 1]],
+        subs_indices=[[0, 0, 1]],
+        film_ids=["JVASP-1002"],
+        subs_ids=["JVASP-1002"],
+        disp_intvl=0.1,
+    )
+    wads = x.calculate_wad_ewald()  # model_path=model_path)
+    wads = np.array(x.wads["ew_wads"])
+    index = np.argmin(wads)
+    wads = x.calculate_wad_vasp(sub_job=True, index=index)
+    # model_path='/users/knc6/Software/alignn/alignn/alignn/ff/alignnff_wt10/'
+    # wads = x.calculate_wad_alignn() #model_path=model_path)
+    # wads = x.calculate_wad_matgl() #model_path=model_path)
+    # wads=np.array(x.wads['alignn_wads'])
+    # atoms=Atoms.from_dict(x.generated_interfaces[index]['generated_interface'])
+    # print(atoms)
+    # print(wads)
+    # print(wads[index])
+    x = InterfaceCombi(
+        dataset=dataset,
+        film_indices=[[1, 1, 0]],
+        subs_indices=[[1, 1, 0]],
+        film_ids=["JVASP-21195"],
+        subs_ids=["JVASP-21195"],
+        disp_intvl=0.1,
+    )
