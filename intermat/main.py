@@ -1,7 +1,7 @@
 """Module to generate interface combinations."""
 from jarvis.analysis.interface.zur import ZSLGenerator
 from jarvis.core.atoms import add_atoms, fix_pbc
-from jarvis.core.lattice import Lattice
+from jarvis.core.lattice import Lattice, lattice_coords_transformer
 from jarvis.tasks.queue_jobs import Queue
 from jarvis.io.vasp.inputs import Poscar, Incar, Potcar
 from jarvis.core.kpoints import Kpoints3D
@@ -18,7 +18,9 @@ from jarvis.analysis.defects.surface import Surface
 from jarvis.db.figshare import get_jid_data
 from jarvis.core.atoms import Atoms
 import pandas as pd
+import time
 
+#TODO: Save InterFaceCombi.json
 
 def write_jobpy(pyname="job.py", job_json=""):
     # job_json = os.getcwd()+'/'+'job.json'
@@ -29,6 +31,66 @@ def write_jobpy(pyname="job.py", job_json=""):
     f.write("v=VaspJob.from_dict(d)\n")
     f.write("v.runjob()\n")
     f.close()
+
+
+def add_atoms(
+    top, bottom, distance=[0, 0, 1], apply_strain=False, add_tags=True
+):
+    """
+    Add top and bottom Atoms with a distance array.
+
+    Bottom Atoms lattice-matrix is chosen as final lattice.
+    """
+    top = top.center_around_origin([0, 0, 0])
+    bottom = bottom.center_around_origin(distance)
+    strain_x = (
+        top.lattice_mat[0][0] - bottom.lattice_mat[0][0]
+    ) / bottom.lattice_mat[0][0]
+    strain_y = (
+        top.lattice_mat[1][1] - bottom.lattice_mat[1][1]
+    ) / bottom.lattice_mat[1][1]
+    if apply_strain:
+        top.apply_strain([strain_x, strain_y, 0])
+    #  print("strain_x,strain_y", strain_x, strain_y)
+    elements = []
+    coords = []
+    props = []
+    lattice_mat = bottom.lattice_mat
+    for i, j in zip(bottom.elements, bottom.frac_coords):
+        elements.append(i)
+        coords.append(j)
+        props.append("bottom")
+    top_cart_coords = lattice_coords_transformer(
+        new_lattice_mat=top.lattice_mat,
+        old_lattice_mat=bottom.lattice_mat,
+        cart_coords=top.cart_coords,
+    )
+    top_frac_coords = bottom.lattice.frac_coords(top_cart_coords)
+    for i, j in zip(top.elements, top_frac_coords):
+        elements.append(i)
+        coords.append(j)
+        props.append("top")
+
+    order = np.argsort(np.array(elements))
+    elements = np.array(elements)[order]
+    coords = np.array(coords)[order]
+    props = (np.array(props)[order]).tolist()
+    determnt = np.linalg.det(np.array(lattice_mat))
+    if determnt < 0.0:
+        lattice_mat = -1 * np.array(lattice_mat)
+    determnt = np.linalg.det(np.array(lattice_mat))
+    if determnt < 0.0:
+        print("Serious issue, check lattice vectors.")
+        print("Many software follow right hand basis rule only.")
+    combined = Atoms(
+        lattice_mat=lattice_mat,
+        coords=coords,
+        elements=elements,
+        props=props,
+        cartesian=False,
+    ).center_around_origin()
+    # print('combined props',combined)
+    return combined
 
 
 class InterfaceCombi(object):
@@ -481,7 +543,7 @@ class InterfaceCombi(object):
                                         )
                                         # print("name", name)
                                         # print("dis_tmp", dis_tmp)
-                                        print(i, j)
+                                        # print(i, j)
                                         info1 = self.get_interface(
                                             film_atoms=i,
                                             subs_atoms=j,
@@ -904,13 +966,14 @@ class InterfaceCombi(object):
             jobid = os.getcwd() + "/jobid"
             print("jobid", jobid)
             if sub_job and not os.path.exists(jobid):
+            #if sub_job:# and not os.path.exists(jobid):
                 Queue.slurm(
                     job_line=path,
                     jobname=jobname,
-                    walltime="7-00:00:00",
+                    walltime="70-00:00:00",
                     directory=os.getcwd(),
                     submit_cmd=["sbatch", "submit_job"],
-                    # queue="coin",
+                    queue="coin,epyc,highmem",
                 )
             else:
                 print("jobid exists", jobid)
@@ -976,8 +1039,8 @@ class InterfaceCombi(object):
 
 
 def metal_metal_interface_workflow():
-    df = pd.read_csv("Interface.csv")
-    # df = pd.read_csv("Interface_metals.csv")
+    # df = pd.read_csv("Interface.csv")
+    df = pd.read_csv("Interface_metals.csv")
     dataset1 = j_data("dft_3d")
     dataset2 = j_data("dft_2d")
     dataset = dataset1 + dataset2
@@ -1023,7 +1086,8 @@ def metal_metal_interface_workflow():
 
 def semicon_mat_interface_workflow():
     dataset = j_data("dft_3d")
-    # Cu(867),Al(816),Ni(943),Pt(972),Cu(816),Ti(1029),Pd(963),Au(825),Ag(813),Hf(802), Nb(934)
+    # Cu(867),Al(816),Ni(943),Pt(972),Cu(816),Ti(1029),
+    # Pd(963),Au(825),Ag(813),Hf(802), Nb(934)
     combinations = [
         ["JVASP-1002", "JVASP-867", [0, 0, 1], [0, 0, 1]],
         ["JVASP-1002", "JVASP-867", [0, 0, 1], [1, 1, 1]],
@@ -1127,6 +1191,132 @@ def semicon_mat_interface_workflow():
         # wads = x.calculate_wad_vasp(sub_job=True)
 
 
+def semicon_mat_interface_workflow2():
+    dataset = j_data("dft_3d")
+    # Cu(867),Al(816),Ni(943),Pt(972),Cu(816),Ti(1029),Pd(963),Au(825),Ag(813),Hf(802), Nb(934)
+    # Ge(890), AlN(39), GaN(30), BN(62940), CdO(20092), CdS(8003), CdSe(1192), CdTe(23), ZnO(1195), ZnS(96), ZnSe(10591), ZnTe(1198), BP(1312), BAs(133719),
+    # BSb(36873), AlP(1327), AlAs(1372), AlSb(1408), GaP(8184), GaAs(1174), GaSb(1177), InN(1180), InP(1183), InAs(1186), InSb(1189), C(91), SiC(8158,8118,107), GeC(36018), SnC(36408), SiGe(105410), SiSn(36403), , Sn(1008)
+    combinations = [
+        ["JVASP-1002", "JVASP-890", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-890", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-890", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-39", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-39", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-39", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-39", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-62940", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-62940", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-62940", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-20092", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-20092", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-20092", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-8003", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-8003", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-8003", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1192", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1192", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1192", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-23", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-23", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-23", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1195", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1195", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1195", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-96", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-96", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-96", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-10591", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-10591", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-10591", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1198", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1198", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1198", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1312", [1, 1, 0], [1, 1, 0]],
+######################################################################
+        ["JVASP-1002", "JVASP-1312", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1312", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-133719", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-133719", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-133719", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-36873", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-36873", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-36873", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1327", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1327", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1327", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1372", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1372", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1372", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1372", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1408", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1408", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1408", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-8184", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-8184", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-8184", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1174", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1174", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1174", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1177", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1177", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1177", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1180", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1180", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1180", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1183", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1183", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1183", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1186", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1186", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1186", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1189", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1189", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1189", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-91", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-91", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-91", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-8118", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-8118", [0, 0, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-8118", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-107", [1, 0, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-107", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-107", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-36018", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-36018", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-36018", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-36408", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-36408", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-36408", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-105410", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-105410", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-105410", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-36403", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-36403", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-36403", [1, 1, 1], [1, 1, 1]],
+        ["JVASP-1002", "JVASP-1008", [1, 1, 0], [1, 1, 0]],
+        ["JVASP-1002", "JVASP-1008", [1, 1, 0], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-1008", [1, 1, 1], [1, 1, 1]],
+    ]
+
+    for i in combinations:
+        try:
+            x = InterfaceCombi(
+                dataset=dataset,
+                film_indices=[i[2]],
+                subs_indices=[i[3]],
+                film_ids=[i[0]],
+                subs_ids=[i[1]],
+                disp_intvl=0.1,
+            )
+            wads = x.calculate_wad_ewald()
+            wads = np.array(x.wads["ew_wads"])
+            index = np.argmin(wads)
+            wads = x.calculate_wad_vasp(sub_job=True,index=index)
+            #wads = x.calculate_wad_vasp(sub_job=True)
+        except:
+            pass
+
+
 def quick_test():
     box = [[2.715, 2.715, 0], [0, 2.715, 2.715], [2.715, 0, 2.715]]
     coords = [[0, 0, 0], [0.25, 0.2, 0.25]]
@@ -1148,37 +1338,125 @@ def quick_test():
         # disp_intvl=0.1,
     ).generate()
 
-
-if __name__ == "__main__":
-    # semicon_mat_interface_workflow()
-    # metal_metal_interface_workflow()
-    # print()
+def semicon_semicon_interface_workflow():
     dataset = j_data("dft_3d")
+    # Cu(867),Al(816),Ni(943),Pt(972),Cu(816),Ti(1029),Pd(963),Au(825),Ag(813),Hf(802), Nb(934)
+    # Ge(890), AlN(39), GaN(30), BN(62940), CdO(20092), CdS(8003), CdSe(1192), CdTe(23), ZnO(1195), ZnS(96), ZnSe(10591), ZnTe(1198), BP(1312), BAs(133719),
+    # BSb(36873), AlP(1327), AlAs(1372), AlSb(1408), GaP(8184), GaAs(1174), GaSb(1177), InN(1180), InP(1183), InAs(1186), InSb(1189), C(91), SiC(8158,8118,107), GeC(36018), SnC(36408), SiGe(105410), SiSn(36403), , Sn(1008)
+    combinations = [
+        ["JVASP-1372", "JVASP-1174", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-39", "JVASP-30", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1327", "JVASP-8184", [0, 0, 1], [1, 1, 0]],
+        ["JVASP-39", "JVASP-8184", [0, 0, 1], [0, 0, 1]],
+    ]
+
+    for i in combinations:
+        try:
+            x = InterfaceCombi(
+                dataset=dataset,
+                film_indices=[i[2]],
+                subs_indices=[i[3]],
+                film_ids=[i[0]],
+                subs_ids=[i[1]],
+                disp_intvl=0.1,
+            )
+            wads = x.calculate_wad_ewald()
+            wads = np.array(x.wads["ew_wads"])
+            index = np.argmin(wads)
+            wads = x.calculate_wad_vasp(sub_job=True,index=index)
+        except:
+            pass
+
+def quick_compare(
+    jid_film="JVASP-1002",
+    jid_subs="JVASP-1002",
+    film_index=[0, 0, 1],
+    subs_index=[0, 0, 1],
+    disp_intvl=0.1,
+    seperations=[1.5,2.5,3.5],
+):
+    dataset = j_data("dft_3d")
+    info = {}
     x = InterfaceCombi(
         dataset=dataset,
-        film_indices=[[0, 0, 1]],
-        subs_indices=[[0, 0, 1]],
-        film_ids=["JVASP-1002"],
-        subs_ids=["JVASP-1002"],
-        disp_intvl=0.1,
+        film_indices=[film_index],
+        subs_indices=[subs_index],
+        film_ids=[jid_film],
+        subs_ids=[jid_subs],
+        disp_intvl=disp_intvl, 
+        seperations=seperations,
     )
+    t1 = time.time()
+    model_path = "temp1"
+    wads = x.calculate_wad_alignn()
+    # wads = x.calculate_wad_alignn(model_path=model_path)
+    wads = np.array(x.wads["alignn_wads"])
+    index = np.argmin(wads)
+    index_al = index
+    atoms = Atoms.from_dict(
+        x.generated_interfaces[index]["generated_interface"]
+    )
+    print(atoms)
+    print("wads", wads)
+    print(wads[index])
+    t2 = time.time()
+    t_alignn = t2 - t1
+    info["alignn_wads"] = wads
+    info["t_alignn"] = t_alignn
+    info["index_alignn"] = index_al
+    info["alignn_min_wads"] = wads[index]
+
+    t1 = time.time()
+    wads = x.calculate_wad_matgl()  # model_path=model_path)
+    wads = np.array(x.wads["matgl_wads"])
+    atoms = Atoms.from_dict(
+        x.generated_interfaces[index]["generated_interface"]
+    )
+    print(atoms)
+    print("wads", wads)
+    print(wads[index])
+    index_matg = index
+    t2 = time.time()
+    t_matgl = t2 - t1
+    info["matgl_wads"] = wads
+    info["t_matgl"] = t_matgl
+    info["index_matg"] = index_matg
+    info["matgl_min_wads"] = wads[index]
+
+    t1 = time.time()
     wads = x.calculate_wad_ewald()  # model_path=model_path)
     wads = np.array(x.wads["ew_wads"])
-    index = np.argmin(wads)
-    wads = x.calculate_wad_vasp(sub_job=True, index=index)
-    # model_path='/users/knc6/Software/alignn/alignn/alignn/ff/alignnff_wt10/'
-    # wads = x.calculate_wad_alignn() #model_path=model_path)
-    # wads = x.calculate_wad_matgl() #model_path=model_path)
-    # wads=np.array(x.wads['alignn_wads'])
-    # atoms=Atoms.from_dict(x.generated_interfaces[index]['generated_interface'])
-    # print(atoms)
-    # print(wads)
-    # print(wads[index])
-    x = InterfaceCombi(
-        dataset=dataset,
-        film_indices=[[1, 1, 0]],
-        subs_indices=[[1, 1, 0]],
-        film_ids=["JVASP-21195"],
-        subs_ids=["JVASP-21195"],
-        disp_intvl=0.1,
+    atoms = Atoms.from_dict(
+        x.generated_interfaces[index]["generated_interface"]
     )
+    print(atoms)
+    print("wads", wads)
+    print(wads[index])
+    index_ew = index
+    t2 = time.time()
+    t_ew = t2 - t1
+    info["ew_wads"] = wads
+    info["t_ew"] = t_ew
+    info["index_ew"] = index_ew
+    info["ewald_min_wads"] = wads[index]
+
+    # wads = x.calculate_wad_vasp(sub_job=False)
+
+    print(
+        "index_al,index_matg",
+        index_al,
+        index_matg,
+        index_ew,
+        t_alignn,
+        t_matgl,
+        t_ew,
+    )
+    return info
+
+
+if __name__ == "__main__":
+    #semicon_mat_interface_workflow()
+    #metal_metal_interface_workflow()
+    #semicon_mat_interface_workflow2()  
+    #quick_compare()
+    semicon_semicon_interface_workflow()
