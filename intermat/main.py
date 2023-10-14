@@ -20,7 +20,8 @@ from jarvis.core.atoms import Atoms
 import pandas as pd
 import time
 
-#TODO: Save InterFaceCombi.json
+# TODO: Save InterFaceCombi.json
+
 
 def write_jobpy(pyname="job.py", job_json=""):
     # job_json = os.getcwd()+'/'+'job.json'
@@ -966,7 +967,7 @@ class InterfaceCombi(object):
             jobid = os.getcwd() + "/jobid"
             print("jobid", jobid)
             if sub_job and not os.path.exists(jobid):
-            #if sub_job:# and not os.path.exists(jobid):
+                # if sub_job:# and not os.path.exists(jobid):
                 Queue.slurm(
                     job_line=path,
                     jobname=jobname,
@@ -1232,7 +1233,7 @@ def semicon_mat_interface_workflow2():
         ["JVASP-1002", "JVASP-1198", [1, 1, 0], [0, 0, 1]],
         ["JVASP-1002", "JVASP-1198", [1, 1, 1], [1, 1, 1]],
         ["JVASP-1002", "JVASP-1312", [1, 1, 0], [1, 1, 0]],
-######################################################################
+        ######################################################################
         ["JVASP-1002", "JVASP-1312", [0, 0, 1], [0, 0, 1]],
         ["JVASP-1002", "JVASP-1312", [0, 0, 1], [1, 1, 1]],
         ["JVASP-1002", "JVASP-133719", [0, 0, 1], [1, 1, 0]],
@@ -1311,8 +1312,8 @@ def semicon_mat_interface_workflow2():
             wads = x.calculate_wad_ewald()
             wads = np.array(x.wads["ew_wads"])
             index = np.argmin(wads)
-            wads = x.calculate_wad_vasp(sub_job=True,index=index)
-            #wads = x.calculate_wad_vasp(sub_job=True)
+            wads = x.calculate_wad_vasp(sub_job=True, index=index)
+            # wads = x.calculate_wad_vasp(sub_job=True)
         except:
             pass
 
@@ -1337,6 +1338,7 @@ def quick_test():
         subs_ids=["JVASP-816"],
         # disp_intvl=0.1,
     ).generate()
+
 
 def semicon_semicon_interface_workflow():
     dataset = j_data("dft_3d")
@@ -1363,9 +1365,10 @@ def semicon_semicon_interface_workflow():
             wads = x.calculate_wad_ewald()
             wads = np.array(x.wads["ew_wads"])
             index = np.argmin(wads)
-            wads = x.calculate_wad_vasp(sub_job=True,index=index)
+            wads = x.calculate_wad_vasp(sub_job=True, index=index)
         except:
             pass
+
 
 def quick_compare(
     jid_film="JVASP-1002",
@@ -1373,7 +1376,7 @@ def quick_compare(
     film_index=[0, 0, 1],
     subs_index=[0, 0, 1],
     disp_intvl=0.1,
-    seperations=[1.5,2.5,3.5],
+    seperations=[1.5, 2.5, 3.5],
 ):
     dataset = j_data("dft_3d")
     info = {}
@@ -1383,7 +1386,7 @@ def quick_compare(
         subs_indices=[subs_index],
         film_ids=[jid_film],
         subs_ids=[jid_subs],
-        disp_intvl=disp_intvl, 
+        disp_intvl=disp_intvl,
         seperations=seperations,
     )
     t1 = time.time()
@@ -1454,9 +1457,95 @@ def quick_compare(
     return info
 
 
+def lead_mat_designer(
+    lead="JVASP-813",
+    mat="JVASP-1002",
+    film_index=[1, 1, 1],
+    subs_index=[0, 0, 1],
+    disp_intvl=0.3,
+    seperations=[2.5],
+    fast_checker="ewald",
+    dataset=[],
+):
+    jid_film = lead
+    jid_subs = mat
+    x = InterfaceCombi(
+        dataset=dataset,
+        film_indices=[film_index],
+        subs_indices=[subs_index],
+        film_ids=[jid_film],
+        subs_ids=[jid_subs],
+        disp_intvl=disp_intvl,
+        seperations=seperations,
+    )
+
+    if fast_checker == "ewald":
+        wads = x.calculate_wad_ewald()
+        wads = np.array(x.wads["ew_wads"])
+    elif fast_checker == "alignn":
+        wads = x.calculate_wad_alignn()
+        wads = np.array(x.wads["alignn_wads"])
+    else:
+        raise ValueError("Not implemented", fast_checker)
+
+    index = np.argmin(wads)
+
+    atoms = Atoms.from_dict(
+        x.generated_interfaces[index]["generated_interface"]
+    )
+
+    film_index = [0, 0, 1]
+    x = InterfaceCombi(
+        dataset=dataset,
+        film_indices=[film_index],
+        subs_indices=[subs_index],
+        subs_ids=[jid_film],
+        film_mats=[atoms],
+        disp_intvl=disp_intvl,
+        seperations=seperations,
+    )
+
+    if fast_checker == "ewald":
+        wads = x.calculate_wad_ewald()
+        wads = np.array(x.wads["ew_wads"])
+    elif fast_checker == "alignn":
+        wads = x.calculate_wad_alignn()
+        wads = np.array(x.wads["alignn_wads"])
+    else:
+        raise ValueError("Not implemented", fast_checker)
+
+    index = np.argmin(wads)
+
+    combined = Atoms.from_dict(
+        x.generated_interfaces[index]["generated_interface"]
+    )
+    combined = combined.center(vacuum=1.5)
+    lat_mat = combined.lattice_mat
+    coords = combined.frac_coords
+    elements = combined.elements
+    props = combined.props
+    tmp = lat_mat.copy()
+    indx = 2
+    tmp[indx] = lat_mat[0]
+    tmp[0] = lat_mat[indx]
+    lat_mat = tmp
+    tmp = coords.copy()
+    tmp[:, indx] = coords[:, 0]
+    tmp[:, 0] = coords[:, indx]
+    coords = tmp
+    combined = Atoms(
+        lattice_mat=lat_mat,
+        coords=coords,
+        elements=elements,
+        cartesian=False,
+        props=props,
+    ).center_around_origin([0.5, 0, 0])
+    return combined
+
+
 if __name__ == "__main__":
-    #semicon_mat_interface_workflow()
-    #metal_metal_interface_workflow()
-    #semicon_mat_interface_workflow2()  
-    #quick_compare()
-    semicon_semicon_interface_workflow()
+    # semicon_mat_interface_workflow()
+    # metal_metal_interface_workflow()
+    # semicon_mat_interface_workflow2()
+    # quick_compare()
+    #semicon_semicon_interface_workflow()
