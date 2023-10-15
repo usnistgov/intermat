@@ -893,6 +893,7 @@ class InterfaceCombi(object):
                 LVHAR=".TRUE.",
                 LWAVE=".FALSE.",
                 LREAL="Auto",
+                ALGO="all",
             )
 
             inc = Incar(data)
@@ -1347,9 +1348,10 @@ def semicon_semicon_interface_workflow():
     # BSb(36873), AlP(1327), AlAs(1372), AlSb(1408), GaP(8184), GaAs(1174), GaSb(1177), InN(1180), InP(1183), InAs(1186), InSb(1189), C(91), SiC(8158,8118,107), GeC(36018), SnC(36408), SiGe(105410), SiSn(36403), , Sn(1008)
     combinations = [
         ["JVASP-1372", "JVASP-1174", [0, 0, 1], [0, 0, 1]],
-        ["JVASP-39", "JVASP-30", [0, 0, 1], [0, 0, 1]],
-        ["JVASP-1327", "JVASP-8184", [0, 0, 1], [1, 1, 0]],
-        ["JVASP-39", "JVASP-8184", [0, 0, 1], [0, 0, 1]],
+        # ["JVASP-39", "JVASP-30", [0, 0, 1], [0, 0, 1]],
+        # ["JVASP-1327", "JVASP-8184", [0, 0, 1], [1, 1, 0]],
+        # ["JVASP-39", "JVASP-8184", [0, 0, 1], [0, 0, 1]],
+        ["JVASP-1002", "JVASP-890", [0, 0, 1], [0, 0, 1]],
     ]
 
     for i in combinations:
@@ -1547,5 +1549,5 @@ if __name__ == "__main__":
     # semicon_mat_interface_workflow()
     # metal_metal_interface_workflow()
     # semicon_mat_interface_workflow2()
-    # quick_compare()
-    #semicon_semicon_interface_workflow()
+    quick_compare()
+    # semicon_semicon_interface_workflow()
