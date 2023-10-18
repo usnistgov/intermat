@@ -57,7 +57,8 @@ def add_atoms(
     coords = []
     props = []
     lattice_mat = bottom.lattice_mat
-    for i, j in zip(bottom.elements, bottom.frac_coords% 1):
+    for i, j in zip(bottom.elements, bottom.frac_coords):
+        # for i, j in zip(bottom.elements, bottom.frac_coords% 1):
         elements.append(i)
         coords.append(j)
         props.append("bottom")
@@ -67,7 +68,8 @@ def add_atoms(
         cart_coords=top.cart_coords,
     )
     top_frac_coords = bottom.lattice.frac_coords(top_cart_coords)
-    for i, j in zip(top.elements, top_frac_coords% 1):
+    for i, j in zip(top.elements, top_frac_coords):
+        # for i, j in zip(top.elements, top_frac_coords% 1):
         elements.append(i)
         coords.append(j)
         props.append("top")
@@ -355,7 +357,8 @@ class InterfaceCombi(object):
         )
         if self.rotate_xz:
             lat_mat = combined.lattice_mat
-            coords = combined.frac_coords% 1
+            coords = combined.frac_coords
+            # coords = combined.frac_coords% 1
             elements = combined.elements
             props = combined.props
             tmp = lat_mat.copy()
@@ -376,7 +379,8 @@ class InterfaceCombi(object):
             ).center_around_origin([0.5, 0, 0])
         if self.lead_ratio is not None:
             a = combined.lattice.abc[0]
-            coords = combined.frac_coords% 1
+            coords = combined.frac_coords
+            # coords = combined.frac_coords% 1
             lattice_mat = combined.lattice_mat
             elements = np.array(combined.elements)
             coords_left = coords[coords[:, 0] < self.lead_ratio]
@@ -616,7 +620,8 @@ class InterfaceCombi(object):
                                         film_sl = chosen_info["film_sl"]
                                         subs_sl = chosen_info["subs_sl"]
                                         disp_coords = []
-                                        coords = ats.frac_coords% 1
+                                        coords = ats.frac_coords
+                                        # coords = ats.frac_coords% 1
                                         elements = ats.elements
                                         lattice_mat = ats.lattice_mat
                                         props = ats.props
@@ -1523,7 +1528,8 @@ def lead_mat_designer(
     )
     combined = combined.center(vacuum=1.5)
     lat_mat = combined.lattice_mat
-    coords = combined.frac_coords% 1
+    coords = combined.frac_coords
+    # coords = combined.frac_coords% 1
     elements = combined.elements
     props = combined.props
     tmp = lat_mat.copy()
