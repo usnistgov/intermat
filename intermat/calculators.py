@@ -213,7 +213,9 @@ class Calc(object):
         if "sub_job" not in self.extra_params:
             sub_job = True
         else:
-            jobname = self.extra_params["sub_job"]
+            sub_job = self.extra_params["sub_job"]
+
+        jobname = self.jobname
 
         if "kp_length" not in self.extra_params:
             kp_length = 30
@@ -236,6 +238,9 @@ class Calc(object):
             vasp_cmd = "mpirun vasp_std"
         else:
             vasp_cmd = self.extra_params["vasp_cmd"]
+        isif=2
+        if self.relax_cell:
+            isif=3
         if "incar" not in self.extra_params:
             inc = dict(
                 PREC="Accurate",
@@ -251,7 +256,7 @@ class Calc(object):
                 EDIFF="1E-6",
                 NSW=500,
                 NELM=500,
-                ISIF=2,
+                ISIF=isif,
                 ISPIN=2,
                 LCHARG=".TRUE.",
                 LVTOT=".TRUE.",
@@ -345,7 +350,7 @@ class Calc(object):
                 walltime="70-00:00:00",
                 directory=os.getcwd(),
                 submit_cmd=["sbatch", "submit_job"],
-                queue="coin,epyc,highmem",
+                queue="epyc",
             )
         else:
             print("jobid exists", jobid)
@@ -393,8 +398,8 @@ class Calc(object):
             f.write(line)
         else:
             print("Method not available")
-        if "write_tb_params" in self.external_params:
-            write_tb = self.external_params["write_tb_params"]
+        if "write_tb_params" in self.extra_params:
+            write_tb = self.extra_params["write_tb_params"]
         else:
             write_tb = False
         line = "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n"
@@ -624,7 +629,7 @@ if __name__ == "__main__":
     elements = ["Cu"]
     atoms = Atoms(lattice_mat=box, coords=coords, elements=elements)
     atoms = Poscar.from_string(cu_pos).atoms
-    calc = Calc(atoms=atoms, method="qe", relax_cell=True, jobname="qe_job")
+    calc = Calc(atoms=atoms, method="vasp", relax_cell=True, jobname="vvqe_job")
     en = calc.predict()
     print(en)
     # semicon_mat_interface_workflow()

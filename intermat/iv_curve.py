@@ -47,7 +47,7 @@ def calc_iv_tb3(
     prefix=None,
 ):
     if not prefix:
-        prefix = combined.composition.reduced_formula
+        prefix = combined.composition.reduced_formula+'_nightly'
     jobname_left = prefix + "_tb3_left"
     calc = Calc(atoms=atoms_left, method="tb3", jobname=jobname_left)
     en = calc.predict()
@@ -86,9 +86,9 @@ def calc_iv_tb3(
         y.append(c)
 
     plt.plot(energies, y)
-    fname = combined.composition.reduced_formula + "_iv_tb3v2.png"
+    fname = combined.composition.reduced_formula + "_iv_tb3v3.png"
     plt.savefig(fname)
-
+    plt.close()
 
 def calc_iv_gpaw(
     atoms_left=[],
@@ -360,7 +360,9 @@ def lead_mat_designer(
     iv_gpaw=False,
     rotate_xz=True,
     try_center=True,
-    center_value=0.5,
+    center_value=None,
+    #center_value=0.5,
+    vasp_job=False,
 ):
     jid_film = lead
     jid_subs = mat
@@ -375,7 +377,6 @@ def lead_mat_designer(
         subs_thicknesses=[subs_thickness],
         seperations=seperations,
     )
-
     if fast_checker == "ewald":
         wads = x.calculate_wad_ewald()
         wads = np.array(x.wads["ew_wads"])
@@ -391,14 +392,14 @@ def lead_mat_designer(
         x.generated_interfaces[index]["generated_interface"]
     )
 
-    film_index = [0, 0, 1]
+    subs_index = [0, 0, 1]
     seperations = np.array(seperations) + tol
     x = InterfaceCombi(
         dataset=dataset,
         film_indices=[film_index],
         subs_indices=[subs_index],
-        subs_ids=[jid_film],
-        film_mats=[atoms],
+        film_ids=[jid_film],
+        subs_mats=[atoms],
         disp_intvl=disp_intvl,
         seperations=seperations,
         # film_thicknesses=[film_thickness],
@@ -420,11 +421,26 @@ def lead_mat_designer(
         x.generated_interfaces[index]["generated_interface"]
     )
     combined = combined.center(vacuum=tol)
+    if center_value is None:
+       film_sl_element = Atoms.from_dict(x.generated_interfaces[index]["film_sl"]).elements[0]  
+       print('film_sl_element',film_sl_element)
+       channel_coords=[]
+       for i,j in zip(combined.frac_coords,combined.elements):
+          if j!=film_sl_element:
+             channel_coords.append(i)
+       channel_coords = np.array(channel_coords)
+       mean_val=np.mean(channel_coords,axis=0)
+       if rotate_xz:
+           center_value = mean_val[0]
+       else:
+           center_value = mean_val[2]
+
     # combined = combined.center(vacuum=seperations[0]-tol)
     center_point = [0, 0, center_value]
     if rotate_xz:
         combined = rotate_atoms(atoms=combined)
         center_point = [center_value, 0, 0]
+    print('center_value used !!!',center_value)
     if try_center:
         combined = combined.center_around_origin(center_point)
     # calc=Calc(atoms=combined,method='matgl',relax_cell=True)
@@ -442,7 +458,9 @@ def lead_mat_designer(
     atoms_right = info["atoms_right"]
     print("atoms_left", atoms_left)
     print("atoms_right", atoms_right)
-    # calc = Calc(atoms=combined, method="vasp", relax_cell=True, jobname="vasp_job_ag_si").predict()
+    v_jobname='vasp_'+lead+'_'+mat+'_'+combined.composition.reduced_formula
+    if vasp_job:
+      calc = Calc(atoms=combined, method="vasp", relax_cell=True, jobname=v_jobname).predict()
     if iv_tb3:
         calc_iv_tb3(
             atoms_left=atoms_left,
@@ -467,28 +485,33 @@ if __name__ == "__main__":
     # print(info)
     x = lead_mat_designer(
         rotate_xz=True,
+        #lead="JVASP-972",
         lead="JVASP-816",
         mat="JVASP-1002",
-        iv_tb3=True,
-        disp_intvl=0.1,
-        center_value=0.82,
-        seperations=[2.0],
-        lead_ratio=0.15,
+        iv_tb3=False,
+        subs_thickness=200,
+        #subs_thickness=50,
+        disp_intvl=0.0,
+        #center_value=0.6,
+        #center_value=0.3,
+        seperations=[1.0],
+        lead_ratio=0.2,
+        vasp_job=False,
     )
+    import sys
+
+    sys.exit()
     x = lead_mat_designer(
-        rotate_xz=True,
+        rotate_xz=False,
         lead="JVASP-1029",
         mat="JVASP-1109",
-        iv_tb3=True,
+        iv_tb3=False,
         disp_intvl=0.1,
         center_value=0.82,
         seperations=[2.0],
         lead_ratio=0.15,
     )
     # print(x)
-    import sys
-
-    sys.exit()
     combined = Atoms.from_poscar(
         "/rk2/knc6/Interfaces/InterMat2/intermat/intermat/tmp/vasp_job_ag_si/vasp_job_ag_si/CONTCAR"
     )
