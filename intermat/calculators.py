@@ -20,6 +20,7 @@ import pandas as pd
 import time
 from ase.optimize.fire import FIRE
 from ase.constraints import ExpCellFilter
+from jarvis.db.jsonutils import loadjson
 
 
 class Calc(object):
@@ -238,9 +239,9 @@ class Calc(object):
             vasp_cmd = "mpirun vasp_std"
         else:
             vasp_cmd = self.extra_params["vasp_cmd"]
-        isif=2
+        isif = 2
         if self.relax_cell:
-            isif=3
+            isif = 3
         if "incar" not in self.extra_params:
             inc = dict(
                 PREC="Accurate",
@@ -370,11 +371,41 @@ class Calc(object):
         info["atoms"] = atoms
         return info
 
-    def tb3(self):
+    def tb3(
+        self,
+    ):
         # TODO: Use pydantic
+        if "tb3_params" not in self.extra_params:
+            lines = (
+                [
+                    "using ThreeBodyTB\nusing NPZ\n",
+                    'crys = makecrys("POSCAR")\n',
+                    "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
+                    # "cfinal, tbc, energy, force, stress = relax_structure(crys,mixing_mode=:simple,mix=0.05);\n",
+                    # "println(cfinal)\n",
+                    "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
+                    # ThreeBodyTB.TB.write_tb_crys("tbc.xml.gz",tbc)\n',
+                    'npzwrite("hk.npz",hk)\n',
+                    'npzwrite("sk.npz",sk)\n',
+                    'open("energy","w") do file\n',
+                    "write(file,string(energy))\n",
+                    "end\n",
+                    'open("fermi_energy","w") do file\n',
+                    'println("efermi",string(tbc.efermi))\n',
+                    "write(file,string(tbc.efermi))\n",
+                    "end\n",
+                    'open("dq","w") do file\n',
+                    'println("dq",(ThreeBodyTB.TB.get_dq(tbc)))\n',
+                    "write(file,string(ThreeBodyTB.TB.get_dq(tbc)))\n",
+                    "end\n",
+                ],
+            )
+        else:
+            lines = self.extra_params["tb3_params"]
+
         atoms = self.atoms
         pos = Poscar(self.atoms)
-        pos_name = "POSCAR-" + self.jobname + ".vasp"
+        pos_name = "POSCAR"
         cwd = os.getcwd()
         name_dir = os.path.join(cwd, self.jobname)
         if not os.path.exists(name_dir):
@@ -382,55 +413,26 @@ class Calc(object):
         os.chdir(name_dir)
         atoms.write_poscar(filename=pos_name)
         f = open("job.jl", "w")
-        f.write("using ThreeBodyTB\nusing NPZ\n")
-        line = 'crys = makecrys("' + pos_name + '")' + "\n"
-        f.write(line)
-        # TODO: Add grid option
-        if self.energy_only and not self.relax_atoms and not self.relax_cell:
-            line = "energy, tbc, flag = scf_energy(crys);\n"
-            f.write(line)
-        elif self.relax_cell:
-            line = (
-                "cfinal, tbc, energy, force, stress = relax_structure(crys);\n"
-            )
-            f.write(line)
-            line = "println(cfinal)\n"
-            f.write(line)
-        else:
-            print("Method not available")
-        if "write_tb_params" in self.extra_params:
-            write_tb = self.extra_params["write_tb_params"]
-        else:
-            write_tb = False
-        line = "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n"
-        f.write(line)
-        if write_tb:
-            line = 'ThreeBodyTB.TB.write_tb_crys("tbc.xml.gz",tbc)\n'
-            f.write(line)
-        line = 'npzwrite("hk.npz",hk)\n'
-        f.write(line)
-        line = 'npzwrite("sk.npz",sk)\n'
-        f.write(line)
-
-        line = 'open("energy","w") do file\n'
-        f.write(line)
-        line = "write(file,string(energy))\n"
-        f.write(line)
-        line = "end\n"
-        f.write(line)
-
+        for i in lines:
+            f.write(i)
         f.close()
-        info = {}
+
         cmd = "julia job.jl"
         os.system(cmd)
-        f = open("energy", "r")
-        en = f.read().splitlines()[0]
-        f.close()
+        info = {}
+        # f = open("energy", "r")
+        # en = f.read().splitlines()[0]
+        # f.close()
+        dq = loadjson("dq")
+        en = float(np.loadtxt("energy"))
+        efermi = float(np.loadtxt("fermi_energy"))
         # jobname = self.jobname
         # atoms=self.atoms
         # from tb3py.main import get_energy
         # en = get_energy(atoms=atoms)
         info["energy"] = en
+        info["dq"] = dq
+        info["efermi"] = efermi
         os.chdir(cwd)
         return info
 
@@ -629,7 +631,10 @@ if __name__ == "__main__":
     elements = ["Cu"]
     atoms = Atoms(lattice_mat=box, coords=coords, elements=elements)
     atoms = Poscar.from_string(cu_pos).atoms
-    calc = Calc(atoms=atoms, method="vasp", relax_cell=True, jobname="vvqe_job")
+    calc = Calc(
+        atoms=atoms, method="tb3", relax_cell=False, jobname="tbtest_job"
+    )
+    # calc = Calc(atoms=atoms, method="vasp", relax_cell=True, jobname="vvqe_job")
     en = calc.predict()
     print(en)
     # semicon_mat_interface_workflow()

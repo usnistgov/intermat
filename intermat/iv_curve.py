@@ -43,19 +43,83 @@ def calc_iv_tb3(
     atoms_left=[],
     atoms_right=[],
     combined=[],
-    energies=np.arange(-0.5, 0.5, 0.001),
+    energies=np.arange(-1.0, 1.0, 0.01),
     prefix=None,
 ):
+    tb3_params = [
+        "using ThreeBodyTB\nusing NPZ\n",
+        'crys = makecrys("POSCAR")\n',
+        "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
+        # "cfinal, tbc, energy, force, stress = relax_structure(crys,mixing_mode=:simple,mix=0.05);\n",
+        # "println(cfinal)\n",
+        "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
+        # ThreeBodyTB.TB.write_tb_crys("tbc.xml.gz",tbc)\n',
+        'npzwrite("hk.npz",hk)\n',
+        'npzwrite("sk.npz",sk)\n',
+        'open("energy","w") do file\n',
+        "write(file,string(energy))\n",
+        "end\n",
+        'open("fermi_energy","w") do file\n',
+        'println("efermi",string(tbc.efermi))\n',
+        "write(file,string(tbc.efermi))\n",
+        "end\n",
+        'open("dq","w") do file\n',
+        'println("dq",(ThreeBodyTB.TB.get_dq(tbc)))\n',
+        "write(file,string(ThreeBodyTB.TB.get_dq(tbc)))\n",
+        "end\n",
+    ]
+
     if not prefix:
-        prefix = combined.composition.reduced_formula + "_nightly"
+        prefix = combined.composition.reduced_formula + "_10-19-2023_atk"
+    extra_params = {}
+    extra_params["tb3_params"] = tb3_params
     jobname_left = prefix + "_tb3_left"
-    calc = Calc(atoms=atoms_left, method="tb3", jobname=jobname_left)
+    calc = Calc(
+        atoms=atoms_left,
+        method="tb3",
+        jobname=jobname_left,
+        extra_params=extra_params,
+    )
     en = calc.predict()
     jobname_right = prefix + "_tb3_right"
-    calc = Calc(atoms=atoms_right, method="tb3", jobname=jobname_right)
+    calc = Calc(
+        atoms=atoms_right,
+        method="tb3",
+        jobname=jobname_right,
+        extra_params=extra_params,
+    )
     en = calc.predict()
     jobname_all = prefix + "_tb3_all"
-    calc = Calc(atoms=combined, method="tb3", jobname=jobname_all)
+    extra_params["tb3_params"] = [
+        "using ThreeBodyTB\nusing NPZ\n",
+        'crys = makecrys("POSCAR")\n',
+        "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
+        # "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05,tot_charge=1);\n",
+        # "cfinal, tbc, energy, force, stress = relax_structure(crys,mixing_mode=:simple,mix=0.05);\n",
+        # "println(cfinal)\n",
+        "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
+        # ThreeBodyTB.TB.write_tb_crys("tbc.xml.gz",tbc)\n',
+        'npzwrite("hk.npz",hk)\n',
+        'npzwrite("sk.npz",sk)\n',
+        'open("energy","w") do file\n',
+        "write(file,string(energy))\n",
+        "end\n",
+        'open("fermi_energy","w") do file\n',
+        'println("efermi",string(tbc.efermi))\n',
+        "write(file,string(tbc.efermi))\n",
+        "end\n",
+        'open("dq","w") do file\n',
+        'println("dq",(ThreeBodyTB.TB.get_dq(tbc)))\n',
+        "write(file,string(ThreeBodyTB.TB.get_dq(tbc)))\n",
+        "end\n",
+    ]
+
+    calc = Calc(
+        atoms=combined,
+        method="tb3",
+        jobname=jobname_all,
+        extra_params=extra_params,
+    )
     en = calc.predict()
     fname = os.path.join(jobname_all, "hk.npz")
     h = np.load(fname)
@@ -477,14 +541,14 @@ def lead_mat_designer(
             atoms_left=atoms_left,
             atoms_right=atoms_right,
             combined=combined,
-            energies=np.arange(-0.5, 0.5, 0.001),
+            energies=np.arange(-1.0, 1.0, 0.01),
         )
     if iv_gpaw:
         calc_iv_gpaw(
             atoms_left=atoms_left,
             atoms_right=atoms_right,
             combined=combined,
-            energies=np.arange(-0.5, 0.5, 0.001),
+            energies=np.arange(-1.0, 1.0, 0.01),
         )
 
     return combined
@@ -494,25 +558,33 @@ if __name__ == "__main__":
     # q=Atoms.from_poscar('q')
     # info = divide_atoms_left_right(combined=q, indx=0, lead_ratio=0.15)
     # print(info)
+    atoms_left = Atoms.from_poscar("atk_right/POSCAR")
+    atoms_right = Atoms.from_poscar("atk_right/POSCAR")
+    atoms_middle = Atoms.from_poscar("atk_middle/POSCAR")
+    calc_iv_tb3(
+        atoms_left=atoms_left, atoms_right=atoms_right, combined=atoms_middle
+    )
+    import sys
+
+    sys.exit()
     x = lead_mat_designer(
         rotate_xz=True,
         # lead="JVASP-972",
-        lead="JVASP-816",
+        lead="JVASP-813",
         mat="JVASP-1002",
-        iv_tb3=False,
-        subs_thickness=200,
+        iv_tb3=True,
+        subs_thickness=150,
         film_thickness=25,
         # subs_thickness=50,
         disp_intvl=0.0,
         # center_value=0.6,
         center_value=None,
         seperations=[2.5],
+        # lead_ratio=0.15,
         lead_ratio=0.05,
         vasp_job=False,
     )
-    import sys
 
-    sys.exit()
     x = lead_mat_designer(
         rotate_xz=False,
         lead="JVASP-1029",
