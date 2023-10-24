@@ -14,6 +14,161 @@ import os
 from ase import units
 
 
+from matplotlib.gridspec import GridSpec
+from ase import units
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy
+from ase.transport.calculators import TransportCalculator
+from jarvis.core.atoms import Atoms
+
+ry_to_ev = 1  # 13.6057039763
+
+
+def make_tb_iv_analysis(
+    prefix="Sn2PdS2_10-21-2023_tb3",
+    shift_value=10,
+    energies=np.arange(-1, 1, 0.05),
+    T=1,
+    filename=None,
+):
+    fname = prefix + "_left/hk.npz"
+    hkl = np.load(fname) * ry_to_ev
+    fname = prefix + "_right/hk.npz"
+    hkr = np.load(fname) * ry_to_ev
+    fname = prefix + "_all/hk.npz"
+    hk = np.load(fname) * ry_to_ev
+
+    fname = prefix + "_all/sk.npz"
+    sk = np.load(fname)
+    fname = prefix + "_left/sk.npz"
+    skl = np.load(fname)
+    fname = prefix + "_right/sk.npz"
+    skr = np.load(fname)
+
+    fname = prefix + "_right/fermi_energy"
+    with open(fname, "r") as f:
+        tb_fermi_level_right = float(f.read().splitlines()[0]) * ry_to_ev
+
+    fname = prefix + "_left/fermi_energy"
+    with open(fname, "r") as f:
+        tb_fermi_level_left = float(f.read().splitlines()[0]) * ry_to_ev
+
+    fname = prefix + "_all/fermi_energy"
+    with open(fname, "r") as f:
+        tb_fermi_level_all = float(f.read().splitlines()[0]) * ry_to_ev
+
+    print(
+        "tb_fermi_level_left,tb_fermi_level_all,tb_fermi_level_right",
+        tb_fermi_level_left,
+        tb_fermi_level_all,
+        tb_fermi_level_right,
+    )
+    ef = 0  # -0.25
+
+    all_vals, vects = scipy.linalg.eigh(hk, sk)
+    tmp_vects = vects.copy()
+    # tmp_vects[0:109,:]=0
+    band_index = np.where(all_vals < tb_fermi_level_all)[0][-1]
+    hk2 = (
+        hk
+        + np.dot(
+            np.dot(
+                sk,
+                np.dot(
+                    tmp_vects[:, band_index:],
+                    tmp_vects[:, band_index:].T.conj(),
+                ),
+            ),
+            sk,
+        )
+        * shift_value
+    )
+
+    r_vals, vects = scipy.linalg.eigh(hkr, skr)
+
+    # tb_fermi_level_right=-0.13527671577372335*ry_to_ev
+    tmp_vects = vects.copy()
+    band_index = np.where(r_vals < tb_fermi_level_right)[0][-1]
+    hkr2 = (
+        hkr
+        + np.dot(
+            np.dot(
+                skr,
+                np.dot(
+                    tmp_vects[:, band_index:],
+                    tmp_vects[:, band_index:].T.conj(),
+                ),
+            ),
+            skr,
+        )
+        * shift_value
+    )
+
+    l_vals, vects = scipy.linalg.eigh(hkl, skl)
+
+    fname = prefix + "_right/POSCAR"
+    atoms = Atoms.from_poscar(fname)
+    print("right", atoms.composition.reduced_formula)
+
+    fname = prefix + "_left/POSCAR"
+    atoms = Atoms.from_poscar(fname)
+    print("left", atoms.composition.reduced_formula)
+
+    fname = prefix + "_all/POSCAR"
+    atoms = Atoms.from_poscar(fname)
+    print("all", atoms.composition.reduced_formula)
+    # energies=np.arange(-3, 3, 0.05)
+    tcalc = TransportCalculator(
+        h=hk2, h1=hkl, h2=hkr2, s=sk, s1=skl, s2=skr, energies=energies
+    )
+    # tcalc = TransportCalculator(h=hk, h1=hkl, h2=hkr, s=sk, s1=skl, s2=skr, align_bf=0, eta=0.4,energies=energies)
+
+    T_e = tcalc.get_transmission()
+    current = tcalc.get_current(energies, T=T)
+
+    the_grid = GridSpec(1, 2)
+    plt.rcParams.update({"font.size": 18})
+    plt.figure(figsize=(8, 4))
+
+    plt.subplot(the_grid[0, 0])
+    plt.plot(energies + ef, units._e**2 / units._hplanck * current)
+    plt.title("(a)")
+    plt.xlabel("U [V]")
+    plt.ylabel("I [A]")
+    plt.axvline(x=0, linestyle="--")
+    plt.axhline(y=0, linestyle="--")
+
+    plt.subplot(the_grid[0, 1])
+    plt.title("(b)")
+    plt.plot(
+        [-1 for i in range(len(r_vals))],
+        r_vals - tb_fermi_level_right,
+        ".",
+        c="r",
+    )
+    plt.plot(
+        [0 for i in range(len(all_vals))],
+        all_vals - tb_fermi_level_all,
+        ".",
+        c="g",
+    )
+    plt.plot(
+        [1 for i in range(len(l_vals))],
+        l_vals - tb_fermi_level_left,
+        ".",
+        c="b",
+    )
+    plt.axhline(y=0, linestyle="--")
+    plt.ylim([-4, 4])
+    plt.xticks([-1, 0, 1], ["Left", "Central", "Right"])
+    plt.ylabel("Eigenvals (eV)")
+    plt.tight_layout()
+    if filename:
+        plt.savefig(filename)
+        plt.close()
+
+
 def rotate_atoms(atoms=[], index_1=0, index_2=2):
     """Rotate structure."""
     # x,y,z : 0,1,2
@@ -49,7 +204,7 @@ def calc_iv_tb3(
     tb3_params = [
         "using ThreeBodyTB\nusing NPZ\n",
         'crys = makecrys("POSCAR")\n',
-        "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
+        "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05,iters=500);\n",
         # "cfinal, tbc, energy, force, stress = relax_structure(crys,mixing_mode=:simple,mix=0.05);\n",
         # "println(cfinal)\n",
         "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
@@ -61,16 +216,21 @@ def calc_iv_tb3(
         "end\n",
         'open("fermi_energy","w") do file\n',
         'println("efermi",string(tbc.efermi))\n',
+        'println("directgap, indirectgap, gaptype, bandwidth",string(ThreeBodyTB.BandStruct.band_summary(tbc)))\n',
         "write(file,string(tbc.efermi))\n",
         "end\n",
         'open("dq","w") do file\n',
         'println("dq",(ThreeBodyTB.TB.get_dq(tbc)))\n',
         "write(file,string(ThreeBodyTB.TB.get_dq(tbc)))\n",
         "end\n",
+        'open("band_summary","w") do file\n',
+        'println("band_summary",(ThreeBodyTB.BandStruct.band_summary(tbc)))\n',
+        "write(file,string(ThreeBodyTB.BandStruct.band_summary(tbc)))\n",
+        "end\n",
     ]
 
     if not prefix:
-        prefix = combined.composition.reduced_formula + "_10-19-2023_atk"
+        prefix = combined.composition.reduced_formula + "_10-21-2023"
     extra_params = {}
     extra_params["tb3_params"] = tb3_params
     jobname_left = prefix + "_tb3_left"
@@ -81,20 +241,13 @@ def calc_iv_tb3(
         extra_params=extra_params,
     )
     en = calc.predict()
+
     jobname_right = prefix + "_tb3_right"
-    calc = Calc(
-        atoms=atoms_right,
-        method="tb3",
-        jobname=jobname_right,
-        extra_params=extra_params,
-    )
-    en = calc.predict()
-    jobname_all = prefix + "_tb3_all"
     extra_params["tb3_params"] = [
         "using ThreeBodyTB\nusing NPZ\n",
         'crys = makecrys("POSCAR")\n',
-        "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
-        # "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05,tot_charge=1);\n",
+        "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05,iters=500);\n",
+        # "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05,tot_charge=1.0,iters=500);\n",
         # "cfinal, tbc, energy, force, stress = relax_structure(crys,mixing_mode=:simple,mix=0.05);\n",
         # "println(cfinal)\n",
         "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
@@ -106,6 +259,7 @@ def calc_iv_tb3(
         "end\n",
         'open("fermi_energy","w") do file\n',
         'println("efermi",string(tbc.efermi))\n',
+        'println("directgap, indirectgap, gaptype, bandwidth",string(ThreeBodyTB.BandStruct.band_summary(tbc)))\n',
         "write(file,string(tbc.efermi))\n",
         "end\n",
         'open("dq","w") do file\n',
@@ -113,7 +267,18 @@ def calc_iv_tb3(
         "write(file,string(ThreeBodyTB.TB.get_dq(tbc)))\n",
         "end\n",
     ]
+    calc = Calc(
+        atoms=atoms_right,
+        method="tb3",
+        jobname=jobname_right,
+        extra_params=extra_params,
+    )
+    en = calc.predict()
 
+    extra_params = {}
+    extra_params["tb3_params"] = tb3_params
+    jobname_left = prefix + "_tb3_left"
+    jobname_all = prefix + "_tb3_all"
     calc = Calc(
         atoms=combined,
         method="tb3",
@@ -121,6 +286,7 @@ def calc_iv_tb3(
         extra_params=extra_params,
     )
     en = calc.predict()
+
     fname = os.path.join(jobname_all, "hk.npz")
     h = np.load(fname)
     fname = os.path.join(jobname_all, "sk.npz")
@@ -134,10 +300,10 @@ def calc_iv_tb3(
     fname = os.path.join(jobname_right, "sk.npz")
     s2 = np.load(fname)
     tcalc = TransportCalculator(
-        h=h, h1=h1, h2=h2, s=s, s1=s1, s2=s2, align_bf=1, energies=energies
+        h=h, h1=h1, h2=h2, s=s, s1=s1, s2=s2, energies=energies
     )
     T_e = tcalc.get_transmission()
-    current = tcalc.get_current(energies, T=0.0)
+    current = tcalc.get_current(energies, T=1.0)
     plt.plot(energies, units._e**2 / units._hplanck * current)
     plt.ylabel("uI [A]")
     plt.xlabel("U [V]")
@@ -153,6 +319,14 @@ def calc_iv_tb3(
     fname = combined.composition.reduced_formula + "_iv_tb3v3.png"
     plt.savefig(fname)
     plt.close()
+    filename = prefix + ".png"
+    make_tb_iv_analysis(
+        prefix=prefix + "_tb3",
+        shift_value=0,
+        energies=np.arange(-1, 1, 0.05),
+        T=1,
+        filename=filename,
+    )
 
 
 def calc_iv_gpaw(
@@ -426,6 +600,7 @@ def lead_mat_designer(
     rotate_xz=True,
     try_center=True,
     center_value=None,
+    min_tol=0.02,
     # center_value=0.5,
     vasp_job=False,
 ):
@@ -486,34 +661,51 @@ def lead_mat_designer(
     combined = Atoms.from_dict(
         x.generated_interfaces[index]["generated_interface"]
     )
+    # combined = combined.center(vacuum=tol)
+    combined = combined.center(vacuum=seperations[0] - tol)
     print("Initial combined", combined)
-    combined = combined.center(vacuum=tol)
     if center_value is None:
         film_sl_element = Atoms.from_dict(
             x.generated_interfaces[index]["film_sl"]
         ).elements[0]
         print("film_sl_element", film_sl_element)
         channel_coords = []
-        for i, j in zip(combined.frac_coords, combined.elements):
+        for i, j in zip(combined.frac_coords % 1, combined.elements):
             if j == film_sl_element:
                 # if j!=film_sl_element:
-                channel_coords.append(i)
+                channel_coords.append(i)  # actually film
         channel_coords = np.array(channel_coords)
         mean_val = np.mean(channel_coords, axis=0)
-        mean_val = np.min(channel_coords, axis=0) - 0.02
+        mean_val = np.min(channel_coords, axis=0)
         if rotate_xz:
-            center_value = mean_val[0]
+            center_value = mean_val[0] - min_tol
         else:
-            center_value = mean_val[2]
+            center_value = mean_val[2] - min_tol
 
-    combined = combined.center(vacuum=seperations[0] - tol)
     center_point = [0, 0, center_value]
     if rotate_xz:
         combined = rotate_atoms(atoms=combined)
         center_point = [center_value, 0, 0]
     print("center_value used !!!", center_value)
-    if try_center:
-        combined = combined.center_around_origin(center_point)
+
+    # if try_center:
+    #    combined = combined.center_around_origin(center_point)
+    def translate_atoms(atoms=[], disp=[]):
+        elements = atoms.elements
+        props = atoms.props
+        frac_coords = atoms.frac_coords % 1
+        lattice_mat = atoms.lattice_mat
+        frac_coords -= center_point
+        atoms = Atoms(
+            lattice_mat=lattice_mat,
+            coords=frac_coords,
+            cartesian=False,
+            elements=elements,
+            props=props,
+        )
+        return atoms
+
+    combined = translate_atoms(atoms=combined, disp=center_point)
     # calc=Calc(atoms=combined,method='matgl',relax_cell=True)
     # info=calc.predict()
     # combined=info['atoms']
@@ -547,7 +739,8 @@ def lead_mat_designer(
         calc_iv_gpaw(
             atoms_left=atoms_left,
             atoms_right=atoms_right,
-            combined=combined,
+            combined=info["atoms_middle"],
+            # combined=combined,
             energies=np.arange(-1.0, 1.0, 0.01),
         )
 
@@ -558,31 +751,89 @@ if __name__ == "__main__":
     # q=Atoms.from_poscar('q')
     # info = divide_atoms_left_right(combined=q, indx=0, lead_ratio=0.15)
     # print(info)
-    atoms_left = Atoms.from_poscar("atk_right/POSCAR")
-    atoms_right = Atoms.from_poscar("atk_right/POSCAR")
-    atoms_middle = Atoms.from_poscar("atk_middle/POSCAR")
-    calc_iv_tb3(
-        atoms_left=atoms_left, atoms_right=atoms_right, combined=atoms_middle
-    )
+    # atoms_left = Atoms.from_poscar("atk_right/POSCAR")
+    # atoms_right = Atoms.from_poscar("atk_right/POSCAR")
+    # atoms_middle = Atoms.from_poscar("atk_middle/POSCAR")
+    # calc_iv_tb3(
+    #    atoms_left=atoms_left, atoms_right=atoms_right, combined=atoms_middle
+    # )
     import sys
 
-    sys.exit()
     x = lead_mat_designer(
         rotate_xz=True,
-        # lead="JVASP-972",
-        lead="JVASP-813",
-        mat="JVASP-1002",
+        lead="JVASP-963",
+        # lead="JVASP-1029",
+        mat="JVASP-1109",
         iv_tb3=True,
-        subs_thickness=150,
-        film_thickness=25,
+        film_thickness=10,
+        subs_thickness=30,
         # subs_thickness=50,
-        disp_intvl=0.0,
+        disp_intvl=0.1,
         # center_value=0.6,
         center_value=None,
         seperations=[2.5],
-        # lead_ratio=0.15,
-        lead_ratio=0.05,
+        film_index=[1, 1, 1],
+        subs_index=[0, 0, 1],
+        lead_ratio=0.15,
         vasp_job=False,
+        min_tol=-0.03,
+    )
+    sys.exit()
+    x = lead_mat_designer(
+        rotate_xz=True,
+        lead="JVASP-867",
+        # lead="JVASP-1029",
+        mat="JVASP-1109",
+        iv_tb3=True,
+        film_thickness=10,
+        subs_thickness=30,
+        # subs_thickness=50,
+        disp_intvl=0.1,
+        # center_value=0.6,
+        center_value=None,
+        seperations=[2.5],
+        film_index=[1, 1, 1],
+        subs_index=[0, 0, 1],
+        lead_ratio=0.15,
+        vasp_job=False,
+        min_tol=-0.03,
+    )
+    x = lead_mat_designer(
+        rotate_xz=True,
+        lead="JVASP-943",
+        # lead="JVASP-1029",
+        mat="JVASP-1109",
+        iv_tb3=True,
+        film_thickness=10,
+        subs_thickness=30,
+        # subs_thickness=50,
+        disp_intvl=0.1,
+        # center_value=0.6,
+        center_value=None,
+        seperations=[2.5],
+        film_index=[1, 1, 1],
+        subs_index=[0, 0, 1],
+        lead_ratio=0.15,
+        vasp_job=False,
+        min_tol=-0.03,
+    )
+    x = lead_mat_designer(
+        rotate_xz=True,
+        lead="JVASP-1029",
+        mat="JVASP-1109",
+        iv_tb3=True,
+        film_thickness=10,
+        subs_thickness=30,
+        # subs_thickness=50,
+        disp_intvl=0.1,
+        # center_value=0.6,
+        center_value=None,
+        seperations=[2.5],
+        film_index=[0, 0, 1],
+        subs_index=[0, 0, 1],
+        lead_ratio=0.15,
+        vasp_job=False,
+        min_tol=0.02,
     )
 
     x = lead_mat_designer(

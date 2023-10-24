@@ -376,33 +376,39 @@ class Calc(object):
     ):
         # TODO: Use pydantic
         if "tb3_params" not in self.extra_params:
-            lines = (
-                [
-                    "using ThreeBodyTB\nusing NPZ\n",
-                    'crys = makecrys("POSCAR")\n',
-                    "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
-                    # "cfinal, tbc, energy, force, stress = relax_structure(crys,mixing_mode=:simple,mix=0.05);\n",
-                    # "println(cfinal)\n",
-                    "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
-                    # ThreeBodyTB.TB.write_tb_crys("tbc.xml.gz",tbc)\n',
-                    'npzwrite("hk.npz",hk)\n',
-                    'npzwrite("sk.npz",sk)\n',
-                    'open("energy","w") do file\n',
-                    "write(file,string(energy))\n",
-                    "end\n",
-                    'open("fermi_energy","w") do file\n',
-                    'println("efermi",string(tbc.efermi))\n',
-                    "write(file,string(tbc.efermi))\n",
-                    "end\n",
-                    'open("dq","w") do file\n',
-                    'println("dq",(ThreeBodyTB.TB.get_dq(tbc)))\n',
-                    "write(file,string(ThreeBodyTB.TB.get_dq(tbc)))\n",
-                    "end\n",
-                ],
-            )
+            lines = [
+                "using ThreeBodyTB\nusing NPZ\n",
+                'crys = makecrys("POSCAR")\n',
+                "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
+                # "cfinal, tbc, energy, force, stress = relax_structure(crys,mixing_mode=:simple,mix=0.05);\n",
+                # "println(cfinal)\n",
+                "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
+                # ThreeBodyTB.TB.write_tb_crys("tbc.xml.gz",tbc)\n',
+                'npzwrite("hk.npz",hk)\n',
+                'npzwrite("sk.npz",sk)\n',
+                'open("energy","w") do file\n',
+                "write(file,string(energy))\n",
+                "end\n",
+                'open("fermi_energy","w") do file\n',
+                'println("efermi",string(tbc.efermi))\n',
+                "write(file,string(tbc.efermi))\n",
+                "end\n",
+                'open("dq","w") do file\n',
+                'println("dq",(ThreeBodyTB.TB.get_dq(tbc)))\n',
+                "write(file,string(ThreeBodyTB.TB.get_dq(tbc)))\n",
+                "end\n",
+                'open("band_summary","w") do file\n',
+                'println("band_summary",(ThreeBodyTB.BandStruct.band_summary(tbc)))\n',
+                "write(file,string(ThreeBodyTB.BandStruct.band_summary(tbc)))\n",
+                "end\n",
+            ]
+
         else:
             lines = self.extra_params["tb3_params"]
-
+        # print("lines", lines)
+        # print("")
+        # print("")
+        # print("")
         atoms = self.atoms
         pos = Poscar(self.atoms)
         pos_name = "POSCAR"
@@ -414,6 +420,7 @@ class Calc(object):
         atoms.write_poscar(filename=pos_name)
         f = open("job.jl", "w")
         for i in lines:
+            # print("line", i)
             f.write(i)
         f.close()
 
