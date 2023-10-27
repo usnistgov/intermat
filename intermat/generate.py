@@ -1,4 +1,3 @@
-#DEPRECATED USE GENERATE.PY
 """Module to generate interface combinations."""
 from jarvis.analysis.interface.zur import ZSLGenerator
 from jarvis.core.atoms import add_atoms, fix_pbc
@@ -20,6 +19,7 @@ from jarvis.db.figshare import get_jid_data
 from jarvis.core.atoms import Atoms
 import pandas as pd
 import time
+from intermat.calculators import Calc
 
 # TODO: Save InterFaceCombi.json
 
@@ -59,7 +59,6 @@ def add_atoms(
     props = []
     lattice_mat = bottom.lattice_mat
     for i, j in zip(bottom.elements, bottom.frac_coords):
-        # for i, j in zip(bottom.elements, bottom.frac_coords% 1):
         elements.append(i)
         coords.append(j)
         props.append("bottom")
@@ -70,7 +69,6 @@ def add_atoms(
     )
     top_frac_coords = bottom.lattice.frac_coords(top_cart_coords)
     for i, j in zip(top.elements, top_frac_coords):
-        # for i, j in zip(top.elements, top_frac_coords% 1):
         elements.append(i)
         coords.append(j)
         props.append("top")
@@ -143,6 +141,8 @@ class InterfaceCombi(object):
         self.subs_kplengths = subs_kplengths
         self.dataset = dataset
         self.id_tag = id_tag
+        print("self.film_ids", self.film_ids)
+        print("self.subs_ids", self.subs_ids)
         if not self.dataset:
             self.dataset = j_data("dft_3d")
         if not film_mats:
@@ -163,8 +163,6 @@ class InterfaceCombi(object):
                 subs_kplengths.append(self.get_id_atoms(i)["kp_length"])
             self.subs_kplengths = subs_kplengths
             self.subs_mats = subs_mats
-        print("self.film_ids", self.film_ids)
-        print("self.subs_ids", self.subs_ids)
         print("self.film_mats", self.film_mats)
         print("self.subs_mats", self.subs_mats)
         self.disp_intvl = disp_intvl
@@ -359,7 +357,6 @@ class InterfaceCombi(object):
         if self.rotate_xz:
             lat_mat = combined.lattice_mat
             coords = combined.frac_coords
-            # coords = combined.frac_coords% 1
             elements = combined.elements
             props = combined.props
             tmp = lat_mat.copy()
@@ -381,7 +378,6 @@ class InterfaceCombi(object):
         if self.lead_ratio is not None:
             a = combined.lattice.abc[0]
             coords = combined.frac_coords
-            # coords = combined.frac_coords% 1
             lattice_mat = combined.lattice_mat
             elements = np.array(combined.elements)
             coords_left = coords[coords[:, 0] < self.lead_ratio]
@@ -622,7 +618,6 @@ class InterfaceCombi(object):
                                         subs_sl = chosen_info["subs_sl"]
                                         disp_coords = []
                                         coords = ats.frac_coords
-                                        # coords = ats.frac_coords% 1
                                         elements = ats.elements
                                         lattice_mat = ats.lattice_mat
                                         props = ats.props
@@ -664,110 +659,8 @@ class InterfaceCombi(object):
         self.generated_interfaces = gen_intfs
         return gen_intfs
 
-    def calculate_wad_eam(self, potential="Mishin-Ni-Al-Co-2013.eam.alloy"):
+    def calculate_wad(self, method="ewald", extra_params={}):
         x = self.generate()
-        from ase.calculators.eam import EAM
-
-        calculator = EAM(potential=potential)
-
-        def atom_to_energy(atoms):
-            num_atoms = atoms.num_atoms
-            atoms = atoms.ase_converter()
-            atoms.calc = calculator
-            forces = atoms.get_forces()
-            energy = atoms.get_potential_energy()
-            # stress = atoms.get_stress()
-            return energy  # ,forces,stress
-
-        eam_wads = []
-        for i in self.generated_interfaces:
-            # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-            film_atoms = Atoms.from_dict(i["film_surf"])
-            subs_atoms = Atoms.from_dict(i["subs_surf"])
-            film_sl = Atoms.from_dict(i["film_sl"])
-            subs_sl = Atoms.from_dict(i["subs_sl"])
-            film_surface_name = i["film_surface_name"]
-            subs_surface_name = i["subs_surface_name"]
-            intf_name = i["interface_name"]
-            film_en = (
-                film_sl.num_atoms / film_atoms.num_atoms
-            ) * atom_to_energy(atoms=film_atoms, kp_length=i["film_kplength"])
-            subs_en = (
-                subs_sl.num_atoms / subs_atoms.num_atoms
-            ) * atom_to_energy(atoms=subs_atoms, kp_length=i["subs_kplength"])
-            intf_kplength = max(i["film_kplength"], i["subs_kplength"])
-            intf = Atoms.from_dict(i["generated_interface"])
-            # print('intf',intf)
-            interface_en = atom_to_energy(atoms=intf, kp_length=intf_kplength)
-            m = intf.lattice.matrix
-            area = np.linalg.norm(np.cross(m[0], m[1]))
-
-            wa = 16 * (interface_en - subs_en - film_en) / area
-            eam_wads.append(wa)
-
-        self.wads["eam_wads"] = eam_wads
-        return eam_wads
-
-    def calculate_wad_matgl(self):
-        x = self.generate()
-        from matgl.ext.ase import M3GNetCalculator
-        import matgl
-
-        pot = matgl.load_model("M3GNet-MP-2021.2.8-PES")
-        calculator = M3GNetCalculator(pot)
-
-        def atom_to_energy(atoms):
-            num_atoms = atoms.num_atoms
-            atoms = atoms.ase_converter()
-            atoms.calc = calculator
-            forces = atoms.get_forces()
-            energy = atoms.get_potential_energy()
-            stress = atoms.get_stress()
-            return energy  # ,forces,stress
-
-        matgl_wads = []
-        for i in self.generated_interfaces:
-            # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-            film_atoms = Atoms.from_dict(i["film_surf"])
-            subs_atoms = Atoms.from_dict(i["subs_surf"])
-            film_sl = Atoms.from_dict(i["film_sl"])
-            subs_sl = Atoms.from_dict(i["subs_sl"])
-            film_surface_name = i["film_surface_name"]
-            subs_surface_name = i["subs_surface_name"]
-            intf_name = i["interface_name"]
-            film_en = (
-                film_sl.num_atoms / film_atoms.num_atoms
-            ) * atom_to_energy(
-                film_atoms
-            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            subs_en = (
-                subs_sl.num_atoms / subs_atoms.num_atoms
-            ) * atom_to_energy(
-                subs_atoms
-            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-            intf_name = i["interface_name"]
-
-            intf = Atoms.from_dict(i["generated_interface"])
-            # print('intf',intf)
-            interface_en = atom_to_energy(intf)
-            m = intf.lattice.matrix
-            area = np.linalg.norm(np.cross(m[0], m[1]))
-
-            wa = 16 * (interface_en - subs_en - film_en) / area
-            matgl_wads.append(wa)
-        self.wads["matgl_wads"] = matgl_wads
-        return matgl_wads
-
-    def calculate_wad_ewald(self):
-        x = self.generate()
-        from ewald import ewaldsum
-
-        def atom_to_energy(atoms):
-            ew = ewaldsum(atoms)
-            energy = ew.get_ewaldsum()
-            return energy  # ,forces,stress
 
         ew_wads = []
         for i in self.generated_interfaces:
@@ -777,23 +670,44 @@ class InterfaceCombi(object):
             subs_atoms = Atoms.from_dict(i["subs_surf"])
             film_sl = Atoms.from_dict(i["film_sl"])
             subs_sl = Atoms.from_dict(i["subs_sl"])
-            film_surface_name = i["film_surface_name"]
-            subs_surface_name = i["subs_surface_name"]
+            film_surface_name = i["film_surface_name"] + "_" + method
+            subs_surface_name = i["subs_surface_name"] + "_" + method
+            intf_name = i["interface_name"] + "_" + method
+            # Film
+            extra_params["kp_length"] = i["film_kplength"]
+            calc = Calc(
+                method=method,
+                atoms=film_atoms,
+                extra_params=extra_params,
+                jobname=film_surface_name,
+            )
+            en = calc.predict()["energy"]
+            film_en = (film_sl.num_atoms / film_atoms.num_atoms) * en
 
-            film_en = (
-                film_sl.num_atoms / film_atoms.num_atoms
-            ) * atom_to_energy(
-                film_atoms
-            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            subs_en = (
-                subs_sl.num_atoms / subs_atoms.num_atoms
-            ) * atom_to_energy(
-                subs_atoms
-            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-            intf_name = i["interface_name"]
+            # Substrate
+            extra_params["kp_length"] = i["subs_kplength"]
+            calc = Calc(
+                method=method,
+                atoms=subs_atoms,
+                extra_params=extra_params,
+                jobname=subs_surface_name,
+            )
+            en = calc.predict()["energy"]
+            subs_en = (subs_sl.num_atoms / subs_atoms.num_atoms) * en
+
+            # Interface
+            intf_kplength = max(i["film_kplength"], i["subs_kplength"])
+            extra_params["kp_length"] = intf_kplength
+            # intf_name = i["interface_name"]
             intf = Atoms.from_dict(i["generated_interface"])
             # print('intf',intf)
-            interface_en = atom_to_energy(intf)
+            calc = Calc(
+                method=method,
+                atoms=intf,
+                extra_params=extra_params,
+                jobname=intf_name,
+            )
+            interface_en = calc.predict()["energy"]
             m = intf.lattice.matrix
             area = np.linalg.norm(np.cross(m[0], m[1]))
 
@@ -801,249 +715,6 @@ class InterfaceCombi(object):
             ew_wads.append(wa)
         self.wads["ew_wads"] = ew_wads
         return ew_wads
-
-    def calculate_wad_alignn(self, model_path=""):
-        x = self.generate()
-        from alignn.ff.ff import (
-            AlignnAtomwiseCalculator,
-            default_path,
-            wt01_path,
-            ForceField,
-            wt10_path,
-        )
-
-        if model_path == "":
-            model_path = wt10_path()  # wt01_path()
-        calculator = AlignnAtomwiseCalculator(path=model_path, stress_wt=0.3)
-
-        def atom_to_energy(atoms):
-            num_atoms = atoms.num_atoms
-
-            if self.relax:
-                ff = ForceField(
-                    jarvis_atoms=atoms,
-                    model_path=model_path,
-                )
-                opt, energy, fs = ff.optimize_atoms()
-            else:
-                atoms = atoms.ase_converter()
-                atoms.calc = calculator
-                forces = atoms.get_forces()
-                energy = atoms.get_potential_energy()
-                stress = atoms.get_stress()
-            return energy  # ,forces,stress
-
-        alignn_wads = []
-        for i in self.generated_interfaces:
-            # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-            film_atoms = Atoms.from_dict(i["film_surf"])
-            subs_atoms = Atoms.from_dict(i["subs_surf"])
-            film_sl = Atoms.from_dict(i["film_sl"])
-            subs_sl = Atoms.from_dict(i["subs_sl"])
-            film_surface_name = i["film_surface_name"]
-            subs_surface_name = i["subs_surface_name"]
-
-            film_en = (
-                film_sl.num_atoms / film_atoms.num_atoms
-            ) * atom_to_energy(
-                film_atoms
-            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            subs_en = (
-                subs_sl.num_atoms / subs_atoms.num_atoms
-            ) * atom_to_energy(
-                subs_atoms
-            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-            intf_name = i["interface_name"]
-            intf = Atoms.from_dict(i["generated_interface"])
-            # print('intf',intf)
-            interface_en = atom_to_energy(intf)
-            m = intf.lattice.matrix
-            area = np.linalg.norm(np.cross(m[0], m[1]))
-
-            wa = 16 * (interface_en - subs_en - film_en) / area
-            alignn_wads.append(wa)
-        self.wads["alignn_wads"] = alignn_wads
-        return alignn_wads
-
-    def calculate_wad_vasp(
-        self,
-        copy_files=["/users/knc6/bin/vdw_kernel.bindat"],
-        vasp_cmd="mpirun vasp_std",
-        inc="",
-        film_kp_length=30,
-        subs_kp_length=30,
-        sub_job=True,
-        index=None,
-    ):
-        x = self.generate()
-        if inc == "":
-            data = dict(
-                PREC="Accurate",
-                ISMEAR=0,
-                SIGMA=0.05,
-                IBRION=2,
-                LORBIT=11,
-                GGA="BO",
-                PARAM1=0.1833333333,
-                PARAM2=0.2200000000,
-                LUSE_VDW=".TRUE.",
-                AGGAC=0.0000,
-                EDIFF="1E-6",
-                NSW=500,
-                NELM=500,
-                ISIF=2,
-                ISPIN=2,
-                LCHARG=".TRUE.",
-                LVTOT=".TRUE.",
-                LVHAR=".TRUE.",
-                LWAVE=".FALSE.",
-                LREAL="Auto",
-                ALGO="all",
-            )
-
-            inc = Incar(data)
-
-        def atom_to_energy(
-            atoms=[],
-            jobname="",
-            kp_length=30,
-            extra_lines="\n module load vasp/6.3.1\n"
-            + "source ~/anaconda2/envs/my_jarvis/bin/activate my_jarvis\n",
-        ):
-            # num_atoms = atoms.num_atoms
-            # cwd = self.working_dir
-            cwd = os.getcwd()
-            name_dir = os.path.join(cwd, jobname)
-            if not os.path.exists(name_dir):
-                os.mkdir(name_dir)
-            os.chdir(name_dir)
-            pos = Poscar(atoms)
-            pos_name = "POSCAR-" + jobname + ".vasp"
-            atoms.write_poscar(filename=pos_name)
-            pos.comment = jobname
-
-            new_symb = []
-            for ee in atoms.elements:
-                if ee not in new_symb:
-                    new_symb.append(ee)
-            pot = Potcar(elements=new_symb)
-            # if leng - 25 > 0:
-            #    leng = leng - 25
-            # print("leng", k1, k2, leng)
-            kp = Kpoints3D().automatic_length_mesh(
-                lattice_mat=atoms.lattice_mat,
-                length=kp_length,
-            )
-            [a, b, c] = kp.kpts[0]
-            # if "Surf" in jobname:
-            #    kp = Kpoints3D(kpoints=[[a, b, 1]])
-            # else:
-            #    kp = Kpoints3D(kpoints=[[a, b, c]])
-            kp = Kpoints3D(kpoints=[[a, b, 1]])
-            # Step-1 Make VaspJob
-            v = VaspJob(
-                poscar=pos,
-                incar=inc,
-                potcar=pot,
-                kpoints=kp,
-                copy_files=copy_files,
-                jobname=jobname,
-                vasp_cmd=vasp_cmd,
-            )
-
-            # Step-2 Save on a dict
-            jname = os.getcwd() + "/" + "VaspJob_" + jobname + "_job.json"
-            dumpjson(
-                data=v.to_dict(),
-                filename=jname,
-            )
-
-            # Step-3 Write jobpy
-            write_jobpy(job_json=jname)
-            path = (
-                # "\n module load vasp/6.3.1\n"
-                # + "source ~/anaconda2/envs/my_jarvis/bin/activate my_jarvis\n"
-                extra_lines
-                + "python "
-                + os.getcwd()
-                + "/job.py"
-            )
-            # Step-4 QSUB
-            # jobid=os.getcwd() + "/" + jobname + "/jobid"
-            jobid = os.getcwd() + "/jobid"
-            print("jobid", jobid)
-            if sub_job and not os.path.exists(jobid):
-                # if sub_job:# and not os.path.exists(jobid):
-                Queue.slurm(
-                    job_line=path,
-                    jobname=jobname,
-                    walltime="70-00:00:00",
-                    directory=os.getcwd(),
-                    submit_cmd=["sbatch", "submit_job"],
-                    queue="coin,epyc,highmem",
-                )
-            else:
-                print("jobid exists", jobid)
-            out = os.getcwd() + "/" + jobname + "/Outcar"
-            print("out", out)
-            energy = -999
-            if os.path.exists(out):
-                if Outcar(out).converged:
-                    vrun_file = os.getcwd() + "/" + jobname + "/vasprun.xml"
-                    vrun = Vasprun(vrun_file)
-                    energy = float(vrun.final_energy)
-
-            os.chdir(cwd)
-
-            return energy  # ,forces,stress
-
-        vasp_wads = []
-        if index is None:
-            generated_interfaces = self.generated_interfaces
-        else:
-            generated_interfaces = [self.generated_interfaces[index]]
-        for i in generated_interfaces:
-            # for i in self.generated_interfaces:
-            film_atoms = Atoms.from_dict(i["film_surf"])
-            subs_atoms = Atoms.from_dict(i["subs_surf"])
-            film_sl = Atoms.from_dict(i["film_sl"])
-            subs_sl = Atoms.from_dict(i["subs_sl"])
-            film_surface_name = i["film_surface_name"] + "_VASP"
-            subs_surface_name = i["subs_surface_name"] + "_VASP"
-            intf_name = "VASP_" + i["interface_name"] + "_VASP"
-            film_en = (
-                film_sl.num_atoms / film_atoms.num_atoms
-            ) * atom_to_energy(
-                atoms=film_atoms,
-                jobname=film_surface_name,
-                kp_length=film_kp_length,
-            )  # atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            subs_en = (
-                subs_sl.num_atoms / subs_atoms.num_atoms
-            ) * atom_to_energy(
-                atoms=subs_atoms,
-                jobname=subs_surface_name,
-                kp_length=subs_kp_length,
-            )  # atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-            intf_kplength = max(film_kp_length, subs_kp_length)
-            # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
-            # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
-            intf = Atoms.from_dict(i["generated_interface"])
-            interface_en = atom_to_energy(
-                atoms=intf, jobname=intf_name, kp_length=intf_kplength
-            )
-
-            m = intf.lattice.matrix
-            area = np.linalg.norm(np.cross(m[0], m[1]))
-
-            wa = 16 * (interface_en - subs_en - film_en) / area
-            vasp_wads.append(wa)
-        self.wads["vasp_wads"] = vasp_wads
-        return vasp_wads
-
-        # except:
-        #    pass
 
 
 def metal_metal_interface_workflow():
@@ -1530,7 +1201,6 @@ def lead_mat_designer(
     combined = combined.center(vacuum=1.5)
     lat_mat = combined.lattice_mat
     coords = combined.frac_coords
-    # coords = combined.frac_coords% 1
     elements = combined.elements
     props = combined.props
     tmp = lat_mat.copy()
@@ -1558,3 +1228,29 @@ if __name__ == "__main__":
     # semicon_mat_interface_workflow2()
     # quick_compare()
     # semicon_semicon_interface_workflow()
+    dataset = j_data("dft_3d")
+    # dataset2 = j_data("dft_2d")
+    # dataset = dataset1 + dataset2
+    x = InterfaceCombi(
+        dataset=dataset,
+        film_ids=["JVASP-816"],
+        subs_ids=["JVASP-816"],
+        film_indices=[[0, 0, 1]],
+        subs_indices=[[0, 0, 1]],
+        disp_intvl=0.0,
+    )
+    wads = x.calculate_wad(method="ewald", extra_params={})
+    print("ewald wads", wads)
+    wads = x.calculate_wad(
+        method="eam_ase",
+        extra_params={"potential": "Mishin-Ni-Al-Co-2013.eam.alloy"},
+    )
+    print("EAM wads", wads)
+    wads = x.calculate_wad(method="matgl", extra_params={})
+    print("Matgl wads", wads)
+    wads = x.calculate_wad(method="alignn_ff", extra_params={})
+    print("AFF wads", wads)
+    wads = x.calculate_wad(method="emt", extra_params={})
+    print("EMT wads", wads)
+    wads = x.calculate_wad(method="vasp", extra_params={})
+    print("EMT wads", wads)
