@@ -60,17 +60,17 @@ def template_extra_params(method="vasp"):
         info["extra_lines"] = extra_lines
         info["kp_length"] = 30
         info["sub_job"] = True
-        info["walltime"] = "7-00:00:00"
-        info["queue"] = "rack5"
+        info["walltime"] = "30-00:00:00"
+        info["queue"] = "rack1,rack2,rack2e,rack3,rack4,rack4e,rack5,rack6"
     elif method == "tb3":
         lines = [
             "using ThreeBodyTB\nusing NPZ\n",
             'crys = makecrys("POSCAR")\n',
-            "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
-            # "cfinal, tbc, energy, force, stress = relax_structure(crys,mixing_mode=:simple,mix=0.05);\n",
+            # "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
+            "cfinal, tbc, energy, force, stress = relax_structure(crys);\n",
             # "println(cfinal)\n",
             "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
-            # ThreeBodyTB.TB.write_tb_crys("tbc.xml.gz",tbc)\n',
+            'ThreeBodyTB.TB.write_tb_crys("tbc.xml.gz",tbc)\n',
             'npzwrite("hk.npz",hk)\n',
             'npzwrite("sk.npz",sk)\n',
             'open("energy","w") do file\n',
@@ -329,7 +329,7 @@ class Calc(object):
                     "Not implemeneted",
                 )
         elif self.method == "ewald":
-            from ewald import ewaldsum
+            from intermat.ewald import ewaldsum
 
             info = {}
             ew = ewaldsum(self.atoms)
@@ -397,7 +397,8 @@ class Calc(object):
         )
         [a, b, c] = kp.kpts[0]
         if "Surf" in jobname:
-            kp = Kpoints3D(kpoints=[[a, b, 1]])
+            kp = Kpoints3D(kpoints=[[a, b, c]])
+            # kp = Kpoints3D(kpoints=[[a, b, 1]])
         else:
             kp = Kpoints3D(kpoints=[[a, b, c]])
         # kp = Kpoints3D(kpoints=[[a, b, 1]])

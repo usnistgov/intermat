@@ -659,11 +659,16 @@ class InterfaceCombi(object):
         self.generated_interfaces = gen_intfs
         return gen_intfs
 
-    def calculate_wad(self, method="ewald", extra_params={}):
+    def calculate_wad(
+        self, method="ewald", extra_params={}, do_surfaces=True, index=None
+    ):
         x = self.generate()
-
+        if index is None:
+            generated_interfaces = self.generated_interfaces
+        else:
+            generated_interfaces = [self.generated_interfaces[index]]
         ew_wads = []
-        for i in self.generated_interfaces:
+        for i in generated_interfaces:
             # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
             # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
             film_atoms = Atoms.from_dict(i["film_surf"])
@@ -673,27 +678,29 @@ class InterfaceCombi(object):
             film_surface_name = i["film_surface_name"] + "_" + method
             subs_surface_name = i["subs_surface_name"] + "_" + method
             intf_name = i["interface_name"] + "_" + method
-            # Film
-            extra_params["kp_length"] = i["film_kplength"]
-            calc = Calc(
-                method=method,
-                atoms=film_atoms,
-                extra_params=extra_params,
-                jobname=film_surface_name,
-            )
-            en = calc.predict()["energy"]
-            film_en = (film_sl.num_atoms / film_atoms.num_atoms) * en
+            if do_surfaces:
+                # Film
+                extra_params["kp_length"] = i["film_kplength"]
+                calc = Calc(
+                    method=method,
+                    atoms=film_atoms,
+                    extra_params=extra_params,
+                    jobname=film_surface_name,
+                )
+                en = calc.predict()["energy"]
+                film_en = (film_sl.num_atoms / film_atoms.num_atoms) * en
 
-            # Substrate
-            extra_params["kp_length"] = i["subs_kplength"]
-            calc = Calc(
-                method=method,
-                atoms=subs_atoms,
-                extra_params=extra_params,
-                jobname=subs_surface_name,
-            )
-            en = calc.predict()["energy"]
-            subs_en = (subs_sl.num_atoms / subs_atoms.num_atoms) * en
+            if do_surfaces:
+                # Substrate
+                extra_params["kp_length"] = i["subs_kplength"]
+                calc = Calc(
+                    method=method,
+                    atoms=subs_atoms,
+                    extra_params=extra_params,
+                    jobname=subs_surface_name,
+                )
+                en = calc.predict()["energy"]
+                subs_en = (subs_sl.num_atoms / subs_atoms.num_atoms) * en
 
             # Interface
             intf_kplength = max(i["film_kplength"], i["subs_kplength"])
@@ -708,12 +715,14 @@ class InterfaceCombi(object):
                 jobname=intf_name,
             )
             interface_en = calc.predict()["energy"]
-            m = intf.lattice.matrix
-            area = np.linalg.norm(np.cross(m[0], m[1]))
+            wa = -9999
+            if do_surfaces:
+                m = intf.lattice.matrix
+                area = np.linalg.norm(np.cross(m[0], m[1]))
 
-            wa = 16 * (interface_en - subs_en - film_en) / area
+                wa = 16 * (interface_en - subs_en - film_en) / area
             ew_wads.append(wa)
-        self.wads["ew_wads"] = ew_wads
+        self.wads["wads"] = ew_wads
         return ew_wads
 
 
@@ -754,10 +763,10 @@ def metal_metal_interface_workflow():
             subs_ids=subs_ids,
             disp_intvl=0.1,
         )
-        wads = x.calculate_wad_ewald()
-        wads = np.array(x.wads["ew_wads"])
+        wads = x.calculate_wad(method="ewald")
+        wads = np.array(x.wads["wads"])
         index = np.argmin(wads)
-        wads = x.calculate_wad_vasp(sub_job=True, index=index)
+        wads = x.calculate_wad(method="vasp", index=index)
         # wads = x.calculate_wad_vasp(sub_job=True)
     # except:
     #  pass
@@ -863,10 +872,10 @@ def semicon_mat_interface_workflow():
             subs_ids=[i[1]],
             disp_intvl=0.1,
         )
-        wads = x.calculate_wad_ewald()
-        wads = np.array(x.wads["ew_wads"])
+        wads = x.calculate_wad(method="ewald")
+        wads = np.array(x.wads["wads"])
         index = np.argmin(wads)
-        wads = x.calculate_wad_vasp(sub_job=True, index=index)
+        wads = x.calculate_wad(method="vasp", index=index)
         # wads = x.calculate_wad_vasp(sub_job=True)
 
 
@@ -987,10 +996,10 @@ def semicon_mat_interface_workflow2():
                 subs_ids=[i[1]],
                 disp_intvl=0.1,
             )
-            wads = x.calculate_wad_ewald()
-            wads = np.array(x.wads["ew_wads"])
+            wads = x.calculate_wad(method="ewald")
+            wads = np.array(x.wads["wads"])
             index = np.argmin(wads)
-            wads = x.calculate_wad_vasp(sub_job=True, index=index)
+            wads = x.calculate_wad(method="vasp", index=index)
             # wads = x.calculate_wad_vasp(sub_job=True)
         except:
             pass
@@ -1041,10 +1050,10 @@ def semicon_semicon_interface_workflow():
                 subs_ids=[i[1]],
                 disp_intvl=0.1,
             )
-            wads = x.calculate_wad_ewald()
-            wads = np.array(x.wads["ew_wads"])
+            wads = x.calculate_wad(method="ewald")
+            wads = np.array(x.wads["wads"])
             index = np.argmin(wads)
-            wads = x.calculate_wad_vasp(sub_job=True, index=index)
+            wads = x.calculate_wad(method="vasp", index=index)
         except:
             pass
 
@@ -1070,7 +1079,7 @@ def quick_compare(
     )
     t1 = time.time()
     model_path = "temp1"
-    wads = x.calculate_wad_alignn()
+    wads = x.calculate_wad(method="alignn")
     # wads = x.calculate_wad_alignn(model_path=model_path)
     wads = np.array(x.wads["alignn_wads"])
     index = np.argmin(wads)
@@ -1089,8 +1098,8 @@ def quick_compare(
     info["alignn_min_wads"] = wads[index]
 
     t1 = time.time()
-    wads = x.calculate_wad_matgl()  # model_path=model_path)
-    wads = np.array(x.wads["matgl_wads"])
+    wads = x.calculate_wad(method="matgl")  # model_path=model_path)
+    wads = np.array(x.wads["wads"])
     atoms = Atoms.from_dict(
         x.generated_interfaces[index]["generated_interface"]
     )
@@ -1106,8 +1115,8 @@ def quick_compare(
     info["matgl_min_wads"] = wads[index]
 
     t1 = time.time()
-    wads = x.calculate_wad_ewald()  # model_path=model_path)
-    wads = np.array(x.wads["ew_wads"])
+    wads = x.calculate_wad(method="ewald")  # model_path=model_path)
+    wads = np.array(x.wads["wads"])
     atoms = Atoms.from_dict(
         x.generated_interfaces[index]["generated_interface"]
     )
@@ -1159,11 +1168,11 @@ def lead_mat_designer(
     )
 
     if fast_checker == "ewald":
-        wads = x.calculate_wad_ewald()
-        wads = np.array(x.wads["ew_wads"])
+        wads = x.calculate_wad(method="ewald")
+        wads = np.array(x.wads["wads"])
     elif fast_checker == "alignn":
-        wads = x.calculate_wad_alignn()
-        wads = np.array(x.wads["alignn_wads"])
+        wads = x.calculate_wad(method="alignn_ff")
+        wads = np.array(x.wads["wads"])
     else:
         raise ValueError("Not implemented", fast_checker)
 
@@ -1185,11 +1194,11 @@ def lead_mat_designer(
     )
 
     if fast_checker == "ewald":
-        wads = x.calculate_wad_ewald()
-        wads = np.array(x.wads["ew_wads"])
+        wads = x.calculate_wad(method="ewald")
+        wads = np.array(x.wads["wads"])
     elif fast_checker == "alignn":
-        wads = x.calculate_wad_alignn()
-        wads = np.array(x.wads["alignn_wads"])
+        wads = x.calculate_wad(method="alignn_ff")
+        wads = np.array(x.wads["wads"])
     else:
         raise ValueError("Not implemented", fast_checker)
 
@@ -1252,5 +1261,5 @@ if __name__ == "__main__":
     print("AFF wads", wads)
     wads = x.calculate_wad(method="emt", extra_params={})
     print("EMT wads", wads)
-    wads = x.calculate_wad(method="vasp", extra_params={})
-    print("EMT wads", wads)
+    # wads = x.calculate_wad(method="vasp", extra_params={})
+    # print("EMT wads", wads)
