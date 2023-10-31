@@ -83,15 +83,6 @@ def calc_iv_tb3(
     en = calc.predict()
 
 
-    jobname_all = prefix + "_tb3_all"
-    calc = Calc(
-        atoms=combined,
-        method="tb3",
-        jobname=jobname_all,
-        extra_params=extra_params,
-    )
-    en = calc.predict()
-
 
 
     jobname_right = prefix + "_tb3_right"
@@ -125,6 +116,27 @@ def calc_iv_tb3(
         extra_params=extra_params,
     )
     en = calc.predict()
+
+
+
+
+
+
+    extra_params = {}
+    extra_params["tb3_params"] = tb3_params
+    jobname_left = prefix + "_tb3_left"
+    jobname_all = prefix + "_tb3_all"
+    calc = Calc(
+        atoms=combined,
+        method="tb3",
+        jobname=jobname_all,
+        extra_params=extra_params,
+    )
+    en = calc.predict()
+
+
+
+
     fname = os.path.join(jobname_all, "hk.npz")
     h = np.load(fname)
     fname = os.path.join(jobname_all, "sk.npz")
