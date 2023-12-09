@@ -141,18 +141,30 @@ def delta_E(fname=''):
     print(jid2, x2)
     delta_E = x2[2] - x1[2]
     return delta_E
-
-def offset(fname='',x=[],s=[],width=5,left_index=4):
+def get_m_c(x=[],y=[]):
+    A = vstack([x, ones(len(x))]).T
+    m, c = lstsq(A, y)[0]
+    return m, c
+    
+def offset(fname='',x=[],s=[],width=5,left_index=-1,polar=False):
     if len(x)==0:
         x, s, _ = locpot_mean(fname)
+
+    #x = np.load("x.npy")
+    #s = np.load("mean.npy")
+
+    deltaE=delta_E(fname)
+    
+    #deltaE = 0.0
+
     # plt.plot(s,s1)
     # plt.plot(s,s)
     # import sys
     # sys.exit()
-    deltaE=delta_E(fname)
-    #fake data                                                                                                                                                                               
-    #x = np.arange(0, 20.123*np.pi + 0.0000001*np.pi, np.pi/59.123)                                                                                                                          
-    #s = np.sin(x) + np.cos(2*x)                                                                                                                                                             
+
+    #fake data
+    #x = np.arange(0, 20.123*np.pi + 0.0000001*np.pi, np.pi/59.123)
+    #s = np.sin(x) + np.cos(2*x)
 
     # x = np.load("x.npy")
     # s = np.load("mean.npy")
@@ -160,51 +172,158 @@ def offset(fname='',x=[],s=[],width=5,left_index=4):
     S = CubicSpline(x, s)
 
 
-    right_index=-left_index
+
     max_peaks, properties = find_peaks(s, prominence=1, width=width)
     max_peaks = max_peaks[:-1]
+
+    print("Number of peaks ", len(max_peaks))
+    if left_index == -1: #automatically pick left_index from max_peaks
+        print("auto detect left index")
+        if len(max_peaks) <= 8:
+            print("WARNING, not many peaks found")
+            left_index = 1
+        elif len(max_peaks) <= 12:
+            left_index = 2
+        else:
+            left_index = 3
+    else:
+        print("use input left index")
+    print("left index ", left_index)
+    right_index = left_index * -1 + 1
+
     plt.plot(x[max_peaks], s[max_peaks], "x")
     # tmp=int((max_peaks[left_index]-max_peaks[left_index+2]))
     x_target1 = (x[ np.arange(max_peaks[left_index], max_peaks[left_index+1],2) ])
 
-    #points in left cell                                                                                                                                                                     
+
+    #initial guess left
+    L_guess_peaks_left = x_target1[-1] - x_target1[0]
+
+    #points in left cell
     #x_target1 = x[ range(50, 100,2) ]
-    L = best_L_recursive(1.0, 20.0, S, x_target1)
+    print("Initial guess left ", L_guess_peaks_left)
+    L = best_L_recursive(1.0, L_guess_peaks_left * 1.5, S, x_target1)
     print("L ", L)
 
     plt.plot(x, s, c='k')
     XX, AVG = do_average(L, x, S)
 
-    meanval1 = get_mean_val(x_target1, XX, AVG)
-
+    meanval1,m1,c1 = get_mean_val(x_target1, XX, AVG)
+    if polar:
+       plt.plot(XX,np.array(XX)*m1+c1,c='purple',linestyle='-.')
+    # print('x_target1',x_target1)
+    # print('XX',XX)
+    # print('AVG',AVG)
     plt.plot(XX, AVG, c='r')
 
     #x_target2 = x[-200:-150]
     # tmp=int((max_peaks[right_index-1]-max_peaks[right_index]))
     x_target2 = (x[ np.arange(max_peaks[right_index-1], max_peaks[right_index],2) ])
-#x_target2 = x[ range(-100, ,2) ]                                                                                                                                                            
-    L = best_L_recursive(1.0, 20.0, S, x_target2)
+    #x_target2 = x[ range(-100, ,2) ]                                                                                                                                                        
+
+    #initial guess right
+    L_guess_peaks_right = x_target2[-1] - x_target2[0]
+    print("Initial guess right ", L_guess_peaks_right)
+    L = best_L_recursive(1.0, L_guess_peaks_right * 1.5, S, x_target2)
     print("L ", L)
 
     plt.plot(x, s, c='k')
     XX, AVG = do_average(L, x, S)
-
-    meanval2 = get_mean_val(x_target2, XX, AVG)
+    meanval2,m2,c2 = get_mean_val(x_target2, XX, AVG)
+    if polar:
+        plt.plot(XX,np.array(XX)*m2+c2,c='orange',linestyle='-.')
+    
+    if polar:
+        mid_point=int((len(XX)-1)/2)
+        polar_del_V=(np.array(XX)*m2+c2)[mid_point]-(np.array(XX)*m1+c1)[mid_point]
+        plt.plot(mid_point,-7,'*')
+        plt.axvline(x=XX[mid_point], linestyle='-.',c="blue")
+        print('polar delV,mid_point',polar_del_V,mid_point,len(XX),XX[mid_point])
 
     plt.plot(XX, AVG, c='g')
-
     plt.plot(x_target1, S(x_target1), "c")
     plt.plot(x_target2, S(x_target2), "c")
     deltaV=meanval2-meanval1
     phi=deltaV+deltaE
+    if polar:
+        phi=polar_del_V+deltaE
+    plt.grid(color="gray", ls="-.")
+    plt.minorticks_on()
+    plt.ylabel("Potential (eV)")
+    plt.xlim(0,max(x))
+    plt.xlabel("Distance ($\AA$)")
+    #plt.plot(x,[meanval1 for i in range(len(x))],linestyle='-.',color='blue')
+    #plt.plot(x,[meanval2 for i in range(len(x))],linestyle='-.',color='blue')
     print("meanval ", [meanval1, meanval2], meanval2-meanval1,phi)
-    plt.title('Offset (eV):'+str(round(phi,2)))
-    filename = "r2scan_offset_2-" + fname.split("/")[0] + ".png"
-    #plt.show()
-    plt.savefig(filename)
-    plt.close()
+    plt.title('Offset (eV): '+str(round(phi,2)))
+    filename = "r2scan_offset_max-" + fname.split("/")[0] + ".png"
+    print('deltaE',deltaE)
+    plt.show()
+    # plt.savefig(filename)
+    # plt.close()
+# def offset(fname='',x=[],s=[],width=5,left_index=4):
+#     if len(x)==0:
+#         x, s, _ = locpot_mean(fname)
+#     # plt.plot(s,s1)
+#     # plt.plot(s,s)
+#     # import sys
+#     # sys.exit()
+#     deltaE=delta_E(fname)
+#     #fake data                                                                                                                                                                               
+#     #x = np.arange(0, 20.123*np.pi + 0.0000001*np.pi, np.pi/59.123)                                                                                                                          
+#     #s = np.sin(x) + np.cos(2*x)                                                                                                                                                             
 
-    #plt.show()
+#     # x = np.load("x.npy")
+#     # s = np.load("mean.npy")
+
+#     S = CubicSpline(x, s)
+
+
+#     right_index=-left_index
+#     max_peaks, properties = find_peaks(s, prominence=1, width=width)
+#     max_peaks = max_peaks[:-1]
+#     plt.plot(x[max_peaks], s[max_peaks], "x")
+#     # tmp=int((max_peaks[left_index]-max_peaks[left_index+2]))
+#     x_target1 = (x[ np.arange(max_peaks[left_index], max_peaks[left_index+1],2) ])
+
+#     #points in left cell                                                                                                                                                                     
+#     #x_target1 = x[ range(50, 100,2) ]
+#     L = best_L_recursive(1.0, 20.0, S, x_target1)
+#     print("L ", L)
+
+#     plt.plot(x, s, c='k')
+#     XX, AVG = do_average(L, x, S)
+
+#     meanval1 = get_mean_val(x_target1, XX, AVG)
+
+#     plt.plot(XX, AVG, c='r')
+
+#     #x_target2 = x[-200:-150]
+#     # tmp=int((max_peaks[right_index-1]-max_peaks[right_index]))
+#     x_target2 = (x[ np.arange(max_peaks[right_index-1], max_peaks[right_index],2) ])
+# #x_target2 = x[ range(-100, ,2) ]                                                                                                                                                            
+#     L = best_L_recursive(1.0, 20.0, S, x_target2)
+#     print("L ", L)
+
+#     plt.plot(x, s, c='k')
+#     XX, AVG = do_average(L, x, S)
+
+#     meanval2 = get_mean_val(x_target2, XX, AVG)
+
+#     plt.plot(XX, AVG, c='g')
+
+#     plt.plot(x_target1, S(x_target1), "c")
+#     plt.plot(x_target2, S(x_target2), "c")
+#     deltaV=meanval2-meanval1
+#     phi=deltaV+deltaE
+#     print("meanval ", [meanval1, meanval2], meanval2-meanval1,phi)
+#     plt.title('Offset (eV):'+str(round(phi,2)))
+#     filename = "r2scan_offset_2-" + fname.split("/")[0] + ".png"
+#     #plt.show()
+#     plt.savefig(filename)
+#     plt.close()
+
+#     #plt.show()
 
 
 import glob
