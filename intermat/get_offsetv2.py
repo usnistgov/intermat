@@ -119,19 +119,38 @@ def do_average(L, x, S):
         AVG.append(intg2)  #integration
 #        print("int ", integrate.quad(S, xx-L/2.0, xx+L/2.0))                                                                                                                                
     return XX, AVG
+# def get_mean_val(x_target, XX, AVG):
+
+#     tot = 0.0
+#     N = 0
+#     for x_t in x_target:
+# #        print("x ", x)                                                                                                                                                                      
+#         for (xx, avg) in zip(XX, AVG):
+#             if abs(x_t - xx) < 1e-8:
+# #                print("x match ", x, x_t)                                                                                                                                                   
+#                 tot += avg
+#                 N += 1
+#     return tot / N
 def get_mean_val(x_target, XX, AVG):
-
-    tot = 0.0
-    N = 0
-    for x_t in x_target:
-#        print("x ", x)                                                                                                                                                                      
-        for (xx, avg) in zip(XX, AVG):
-            if abs(x_t - xx) < 1e-8:
-#                print("x match ", x, x_t)                                                                                                                                                   
-                tot += avg
-                N += 1
-    return tot / N
-
+    # tot = 0.0
+    # N = 0
+    # for x_t in x_target:                                                                                                                                                                                   
+    #     for (xx, avg) in zip(XX, AVG):
+    #         if abs(x_t - xx) < 1e-8:                                                                                                                                                                
+    #             tot += avg
+    #             N += 1
+    # mean = tot / N
+    x_target=np.array(x_target)
+    XX=np.array(XX)
+    AVG=np.array(AVG)
+    new_x=XX.searchsorted(x_target)
+    new_mean=np.mean(AVG[new_x])
+    #print('new_mean',new_mean)
+    m,c = get_m_c(x=XX[new_x],y=AVG[new_x])
+    #print('new_x',new_x)
+    #print('AVG[new_x]',AVG[new_x])
+    #print('m,c',m,c)
+    return new_mean,m,c
 def delta_E(fname=''):
     jid1 = fname.split("_")[0].split("Interface-")[1]
     jid2 = fname.split("_")[1]
