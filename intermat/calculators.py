@@ -43,6 +43,7 @@ def template_extra_params(method="vasp"):
             NELM=500,
             ISIF=2,
             ISPIN=2,
+            NPAR=4,
             LCHARG=".TRUE.",
             LVTOT=".FALSE.",
             LVHAR=".TRUE.",
@@ -397,8 +398,8 @@ class Calc(object):
         )
         [a, b, c] = kp.kpts[0]
         if "Surf" in jobname:
-            kp = Kpoints3D(kpoints=[[a, b, c]])
-            # kp = Kpoints3D(kpoints=[[a, b, 1]])
+            # kp = Kpoints3D(kpoints=[[a, b, c]])
+            kp = Kpoints3D(kpoints=[[a, b, 1]])
         else:
             kp = Kpoints3D(kpoints=[[a, b, c]])
         # kp = Kpoints3D(kpoints=[[a, b, 1]])

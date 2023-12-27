@@ -240,7 +240,8 @@ dumpjson(data=y, filename="options.json")
 print(len(x), len(y))
 """
 d = loadjson("options.json")
-print(d[0:100])  # dobby
+# print(d[0:100])  # dobby
+print(d[100:200])  # raritan
 import sys
 
 sys.exit()

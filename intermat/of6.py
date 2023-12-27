@@ -1,7 +1,14 @@
+# 12-7-2023 simpson
+##############################
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import (
+    CubicSpline,
+    interp1d,
+    CubicHermiteSpline,
+    Akima1DInterpolator,
+)
 import scipy.integrate as integrate
 from numpy import ones, vstack
 from numpy.linalg import lstsq
@@ -18,8 +25,15 @@ from jarvis.core.atoms import ase_to_atoms
 from jarvis.core.atoms import Atoms
 
 
+def get_m_c(x=[], y=[]):
+    A = vstack([x, ones(len(x))]).T
+    m, c = lstsq(A, y)[0]
+    return m, c
+
+
 def get_dir(jid="JVASP-1002"):
-    pth = jid + "_R2SCAN/r2scan_" + jid + "/r2scan_" + jid + "/OUTCAR"
+    pth = jid + "_R2SCAN/opt_" + jid + "/opt_" + jid + "/OUTCAR"
+    # pth = jid + "_R2SCAN/r2scan_" + jid + "/r2scan_" + jid + "/OUTCAR"
     bandg = Outcar(pth)
     return bandg.bandgap
 
@@ -68,7 +82,8 @@ def locpot_mean(
     mean -= efermi
     avg_max = max(mean)
     print("avg_mx", avg_max)
-    return xvals, mean, out.bandgap[-1]
+    # mean-=avg_max
+    return xvals, mean, out.bandgap[-1], atoms
 
 
 step_size = 10
@@ -83,6 +98,7 @@ def get_best_L(start_L, end_L, S, x_target):
     ):
         current = 0.0
         for xx in x_target:
+            # current += abs(S(xx) - S(xx-L_guess))
             current += abs(S(xx) - S(xx + L_guess))
         if current < best:
             best = current
@@ -105,7 +121,6 @@ def best_L_recursive(start_L, end_L, S, x_target):
 
 
 # do the actual averaging
-# do the actual averaging
 def do_average(L, x, S):
     AVG = []
     XX = []
@@ -115,33 +130,21 @@ def do_average(L, x, S):
         if xx + L / 2.0 > x[-1]:
             continue
         XX.append(xx)
-
-        tmp_x = np.arange(xx - L / 2.0, xx + L / 2.0, 0.1)
+        # print('step',xx)
+        tmp_x = np.arange(xx - L / 2.0, xx + L / 2.0, 0.001)
         # x=np.arange(xx-L/2.0, xx+L/2.0,0.1)
         tmp_y = S(tmp_x)
         # intg2=np.trapz(tmp_y,tmp_x,tmp_x[1]-tmp_x[0])/L
-        intg2 = integrate.quad(S, xx - L / 2.0, xx + L / 2.0)[0] / L
+        # intg2=integrate.quad(S, xx-L/2.0, xx+L/2.0)[0] / L
+        # intg2=integrate.quad(S, xx-L/2.0, xx+L/2.0)[0] / L
         # print('tmp_x[1]-tmp_x[0]',tmp_x[1]-tmp_x[0])
-        # intg2=integrate.simpson(tmp_y,tmp_x,tmp_x[1]-tmp_x[0]) / L
+        intg2 = integrate.simpson(tmp_y, tmp_x, tmp_x[1] - tmp_x[0]) / L
         # print('intg',int)
         AVG.append(intg2)  # integration
     #        print("int ", integrate.quad(S, xx-L/2.0, xx+L/2.0))
     return XX, AVG
 
 
-# def get_mean_val(x_target, XX, AVG):
-
-
-#     tot = 0.0
-#     N = 0
-#     for x_t in x_target:
-# #        print("x ", x)
-#         for (xx, avg) in zip(XX, AVG):
-#             if abs(x_t - xx) < 1e-8:
-# #                print("x match ", x, x_t)
-#                 tot += avg
-#                 N += 1
-#     return tot / N
 def get_mean_val(x_target, XX, AVG):
     # tot = 0.0
     # N = 0
@@ -175,15 +178,9 @@ def delta_E(fname=""):
     return delta_E
 
 
-def get_m_c(x=[], y=[]):
-    A = vstack([x, ones(len(x))]).T
-    m, c = lstsq(A, y)[0]
-    return m, c
-
-
 def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=False):
     if len(x) == 0:
-        x, s, _ = locpot_mean(fname)
+        x, s, _, _ = locpot_mean(fname)
 
     # x = np.load("x.npy")
     # s = np.load("mean.npy")
@@ -300,87 +297,47 @@ def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=False):
     # plt.plot(x,[meanval2 for i in range(len(x))],linestyle='-.',color='blue')
     print("meanval ", [meanval1, meanval2], meanval2 - meanval1, phi)
     plt.title("Offset (eV): " + str(round(phi, 2)))
-    filename = "r2scan_offset_max-" + fname.split("/")[0] + ".png"
+    filename = "opt_offset_max-" + fname.split("/")[0] + ".png"
+    # filename = "r2scan_offset_max-" + fname.split("/")[0] + ".png"
     print("deltaE", deltaE)
-    plt.show()
-    # plt.savefig(filename)
-    # plt.close()
+    # plt.show()
+    plt.savefig(filename)
+    plt.close()
 
 
-# def offset(fname='',x=[],s=[],width=5,left_index=4):
-#     if len(x)==0:
-#         x, s, _ = locpot_mean(fname)
-#     # plt.plot(s,s1)
-#     # plt.plot(s,s)
-#     # import sys
-#     # sys.exit()
-#     deltaE=delta_E(fname)
-#     #fake data
-#     #x = np.arange(0, 20.123*np.pi + 0.0000001*np.pi, np.pi/59.123)
-#     #s = np.sin(x) + np.cos(2*x)
-
-#     # x = np.load("x.npy")
-#     # s = np.load("mean.npy")
-
-#     S = CubicSpline(x, s)
-
-
-#     right_index=-left_index
-#     max_peaks, properties = find_peaks(s, prominence=1, width=width)
-#     max_peaks = max_peaks[:-1]
-#     plt.plot(x[max_peaks], s[max_peaks], "x")
-#     # tmp=int((max_peaks[left_index]-max_peaks[left_index+2]))
-#     x_target1 = (x[ np.arange(max_peaks[left_index], max_peaks[left_index+1],2) ])
-
-#     #points in left cell
-#     #x_target1 = x[ range(50, 100,2) ]
-#     L = best_L_recursive(1.0, 20.0, S, x_target1)
-#     print("L ", L)
-
-#     plt.plot(x, s, c='k')
-#     XX, AVG = do_average(L, x, S)
-
-#     meanval1 = get_mean_val(x_target1, XX, AVG)
-
-#     plt.plot(XX, AVG, c='r')
-
-#     #x_target2 = x[-200:-150]
-#     # tmp=int((max_peaks[right_index-1]-max_peaks[right_index]))
-#     x_target2 = (x[ np.arange(max_peaks[right_index-1], max_peaks[right_index],2) ])
-# #x_target2 = x[ range(-100, ,2) ]
-#     L = best_L_recursive(1.0, 20.0, S, x_target2)
-#     print("L ", L)
-
-#     plt.plot(x, s, c='k')
-#     XX, AVG = do_average(L, x, S)
-
-#     meanval2 = get_mean_val(x_target2, XX, AVG)
-
-#     plt.plot(XX, AVG, c='g')
-
-#     plt.plot(x_target1, S(x_target1), "c")
-#     plt.plot(x_target2, S(x_target2), "c")
-#     deltaV=meanval2-meanval1
-#     phi=deltaV+deltaE
-#     print("meanval ", [meanval1, meanval2], meanval2-meanval1,phi)
-#     plt.title('Offset (eV):'+str(round(phi,2)))
-#     filename = "r2scan_offset_2-" + fname.split("/")[0] + ".png"
-#     #plt.show()
-#     plt.savefig(filename)
-#     plt.close()
-
-#     #plt.show()
-
-
-import glob
-
-# xvals_old, mean_old, _,atoms = locpot_mean(i)
-for i in glob.glob("Int*/r2scan_*/r2scan*/LOCPOT"):
-    try:
+for i in glob.glob("Int*/opt_*/opt*/LOCPOT"):
+    # try:
+    if "Interface-JVASP-1002_JVASP-8184_film_miller_1_1_0" in i:  # 3
+        # if 'JVASP-1174_JVASP-96' in i: #3
+        # if 'JVASP-30_JVASP-1195' in i: #3
+        # if 'JVASP-30_JVASP-8118' in i: #3
+        # if 'JVASP-39_JVASP-1180' in i: #3
+        # if 'JVASP-39_JVASP-8118' in i: #3
+        # if 'JVASP-1002_JVASP-10591' in i: #3
+        # if 'JVASP-1002_JVASP-8118' in i: #3
+        # if 'JVASP-39_JVASP-30' in i: #3
+        # if 'Interface-JVASP-1372_JVASP-1174_film_miller_1_1_0' in i: #3
+        # if 'Interface-JVASP-1372_JVASP-96_film_miller_1_1_0' in i: #3
+        # if 'Interface-JVASP-1372_JVASP-1186_film_miller_1_1_0' in i: #3
+        # if 'Interface-JVASP-1002_JVASP-8184_film_miller_1_1_0' in i: #3
+        # if 'Interface-JVASP-1327_JVASP-8184_film_miller_1_1_0' in i: #3
+        # if 'Interface-JVASP-1174_JVASP-1183_film_miller_1_1_0' in i: #3
+        # if 'Interface-JVASP-1198_JVASP-1192_film_miller_1_1_0' in i: #3
+        # if 'Interface-JVASP-8003_JVASP-1192_film_miller_1_1_0' in i: #3
+        # if 'Interface-JVASP-1183_JVASP-1186_film_miller_1_1_0' in i: #3
+        # if 'Interface-JVASP-96_JVASP-1198_film_miller_1_1_0' in i: #3
+        # if 'JVASP-1183_JVASP-96' in i: #3
+        # if 'JVASP-1408_JVASP-1198' in i: #3
+        # if 'JVASP-1408_JVASP-1186' in i: #3
+        # if 'Interface-JVASP-1002_JVASP-8003_film_miller_1_1_0_sub_miller_1_1_' in i: #3
+        # if 'Interface-JVASP-1002_JVASP-1174_film_miller_1_1_0_sub_miller_1_1_' in i: #3
         # if 'Interface-JVASP-1002_JVASP-1327_film_miller_1_1_0_sub_miller_1_1_' in i: #3
         # if 'Interface-JVASP-1174_JVASP-825_film_miller_0_0_1_sub_miller_0_0_' in i: #4
         # if 'Interface-JVASP-1002_JVASP-816_film_miller_0_0_1_sub_miller_0_0_' in i: #3
         # if 'Interface-JVASP-1002_JVASP-825_film_miller_0_0_1_sub_miller_0_0_' in i: #4
-        offset(fname=i, left_index=2)
-    except:
-        pass
+        # for j in arr:
+
+        offset(fname=i, left_index=-1, polar=False)
+        # offset(fname=i,left_index=4,polar=True)
+# except:
+#  pass

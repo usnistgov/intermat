@@ -571,8 +571,9 @@ def divide_atoms_left_right(combined=[], indx=0, lead_ratio=0.15):
         cartesian=False,
         # props=props_middle
     )
-    atoms_left = atoms_left.center(axis=0, vacuum=1.0)
-    atoms_right = atoms_right.center(axis=0, vacuum=1.0)
+    atoms_left = atoms_left.center(axis=indx, vacuum=1.0)
+    atoms_right = atoms_right.center(axis=indx, vacuum=1.0)
+    atoms_middle = atoms_middle.center(axis=indx, vacuum=1.0)
     info = {}
     info["atoms_left"] = atoms_left
     info["atoms_right"] = atoms_right

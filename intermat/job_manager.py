@@ -12,10 +12,10 @@ def get_json_data():
 
 def get_submitted_jobs(path="/working/knc6/InterfacesMr/Int*/submit_job"):
     mem = []
-    for i in glob.glob(path):   
-     if '*' not in i:
-        tmp = i.split("/")[-2]
-        mem.append(tmp)
+    for i in glob.glob(path):
+        if "*" not in i:
+            tmp = i.split("/")[-2]
+            mem.append(tmp)
     print("path,mem", path, len(mem))
     return mem
 

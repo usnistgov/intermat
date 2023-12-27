@@ -40,6 +40,7 @@ def get_model(model_path="/wrk/knc6/CBM_VBM/Out_VBM_3D"):
     model.eval()
     return model
 
+
 def get_vbm():
     model_vbm = get_model()
     rel_val = 10
@@ -99,6 +100,8 @@ def get_vbm():
         except:
             print("Failed", i["jid"])
             pass
+
+
 x = []
 for i in glob.glob("*.json"):
     x.append(i)
@@ -155,4 +158,3 @@ for ii, i in enumerate(x):
             # print(line)
             f.write(line)
 f.close()
-
