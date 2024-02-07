@@ -4,25 +4,34 @@
 
 # intermat
 
-## Inroduction
+## Introduction
 
 ## Installation
 
-## Functioanlities
+## Functionalities
 
-### Getting bulk structures
+### Getting bulk structures -starting structures
 
-### Zur algorithm based interface
+### Surfaces
 
-### Quick refinement with ALIGNN-FF, Ewald
+### Generating interface structures
+Zur algorithm based interface (terminations?)
+ASJ vs STJ, etc. 
 
-### Various calculators
+### Rapid structure screening / relaxation
+ALIGNN-FF, Ewald, TB?
+
+### Computational Engines
+VASP, QE, LAMMPS.
 
 ### Properties using post-processing (band alignment/offset)
+IU vs ASJ/STJ
+Band alignment, band gap, work function, ionization potential, electron affinity, adhesion energy, surface energy
 
 ### AI/ML
+Property prediction
 
 ## Curated dataset
-
+Experimental validation
 
 
