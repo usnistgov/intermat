@@ -3,3 +3,26 @@
 [![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/7492b51b371a8e9dbaa01d76bb438467)
 
 # intermat
+
+## Inroduction
+
+## Installation
+
+## Functioanlities
+
+### Getting bulk structures
+
+### Zur algorithm based interface
+
+### Quick refinement with ALIGNN-FF, Ewald
+
+### Various calculators
+
+### Properties using post-processing (band alignment/offset)
+
+### AI/ML
+
+## Curated dataset
+
+
+
