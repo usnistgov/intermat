@@ -2,9 +2,21 @@
 [![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/debf9cbefa9a290502d73fd3cbc4fd69)
 [![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/7492b51b371a8e9dbaa01d76bb438467)
 
-# intermat
+# InterMat
 
 ## Introduction
+
+Interface materials design (InterMat) package allows: 
+
+ 1) generation of an atomistic interface geometry,
+ 2) integrating multi-scale methods,
+ 3) determining interface properties such as equilibrium geometries, energetics, work functions, ionization potentials, electron affinities, band offsets, carrier effective masses, mobilities, and thermal conductivities,
+ 4) classification of heterojunction using various models such as ASJ, STJ and IU models,
+ 5) benchmarking calculated properties with experiments,
+ 6) training machine learning models especially for interface design.
+
+
+
 
 ## Installation
 
