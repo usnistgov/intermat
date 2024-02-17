@@ -20,6 +20,21 @@ Interface materials design (InterMat) package allows:
 
 ## Installation
 
+-   We recommend installing miniconda environment from
+    <https://conda.io/miniconda.html> :
+
+        bash Miniconda3-latest-Linux-x86_64.sh (for linux)
+        bash Miniconda3-latest-MacOSX-x86_64.sh (for Mac)
+        Download 32/64 bit python 3.9 miniconda exe and install (for windows)
+        Now, let's make a conda environment just for JARVIS::
+        conda create --name my_intermat python=3.9
+        source activate my_intermat
+
+
+        git clone https://github.com/usnistgov/intermat.git
+        cd inermat
+        python setup.py develop
+
 ## Functionalities
 
 ### Getting bulk structures -starting structures
