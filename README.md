@@ -91,6 +91,7 @@ for i in semicons:
                     print(len(non_polar_semi),t2-t1)
                     t1=time.time()
 
+```
 
 ### Generating interface structures and calculations
 Zur algorithm based interface (& terminations) ASJ vs STJ, etc. models
