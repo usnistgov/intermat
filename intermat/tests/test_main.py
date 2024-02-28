@@ -5,7 +5,7 @@ from matplotlib.ticker import LinearLocator
 import os
 from jarvis.db.figshare import get_jid_data
 from jarvis.core.atoms import Atoms
-from intermat.main import InterfaceCombi
+from intermat.generate import InterfaceCombi
 
 # import plotly.graph_objects as go
 # import plotly.express as px
@@ -30,9 +30,12 @@ def test_eam():
         vacuum_interface=2,
         film_ids=["JVASP-816"],
         subs_ids=["JVASP-943"],
-        disp_intvl=0.2,
+        disp_intvl=0.5,
     )
-    wads = x.calculate_wad_eam(potential=pot)
+    wads = x.calculate_wad(
+        method="eam_ase",
+        extra_params={"potential": "Mishin-Ni-Al-Co-2013.eam.alloy"},
+    )
     print(len(wads))
 
     X = x.X

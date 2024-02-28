@@ -1557,4 +1557,4 @@ if __name__ == "__main__":
     # metal_metal_interface_workflow()
     # semicon_mat_interface_workflow2()
     # quick_compare()
-    # semicon_semicon_interface_workflow()
+    semicon_semicon_interface_workflow()

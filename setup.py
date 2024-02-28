@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="intermat",
-    version="2023.9.1",
+    version="2024.1.1",
     author="Kamal Choudhary",
     author_email="kamal.choudhary@nist.gov",
     description="intermat",
