@@ -30,7 +30,8 @@ device = "cpu"
 if torch.cuda.is_available():
     device = torch.device("cuda")
 dft_3d = data("dft_3d")
-d=loadjson('ALIGNN/mill_1.json')
+d = loadjson("ALIGNN/mill_1.json")
+
 
 def get_model(model_path="/wrk/knc6/CBM_VBM/Out_VBM_3D"):
     cnfg = os.path.join(model_path, "config.json")
@@ -41,6 +42,8 @@ def get_model(model_path="/wrk/knc6/CBM_VBM/Out_VBM_3D"):
     model.to(device)
     model.eval()
     return model
+
+
 def get_vbm():
     model_vbm = get_model()
     rel_val = 10
@@ -163,8 +166,9 @@ def get_vbm():
 
 import time
 from collections import defaultdict
-info=defaultdict(list)
-count=0
+
+info = defaultdict(list)
+count = 0
 t1 = time.time()
 for ii, d1 in enumerate(d):
     for jj, d2 in enumerate(d):
@@ -188,14 +192,23 @@ for ii, d1 in enumerate(d):
                 int_type1 = 1
             if int_type1 == "III":
                 int_type1 = 2
-            #print ('int_type1',int_type1)
-            name=d1['jid']+'_'+d1['miller']+d2['jid']+'_'+d2['miller']
+            # print ('int_type1',int_type1)
+            name = (
+                d1["jid"] + "_" + d1["miller"] + d2["jid"] + "_" + d2["miller"]
+            )
             info[int_type1].append(name)
-            count+=1
-            if count%100000000==0:
+            count += 1
+            if count % 100000000 == 0:
                 t2 = time.time()
-                print('Num, 0,1,2,t',count,len(info[0]),len(info[1]),len(info[2]), round(t2-t1,3))
+                print(
+                    "Num, 0,1,2,t",
+                    count,
+                    len(info[0]),
+                    len(info[1]),
+                    len(info[2]),
+                    round(t2 - t1, 3),
+                )
                 t1 = time.time()
-                
-                #import sys
-                #sys.exit()
+
+                # import sys
+                # sys.exit()

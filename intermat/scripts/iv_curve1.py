@@ -70,7 +70,9 @@ def calc_iv_tb3(
     ]
 
     if not prefix:
-        prefix = combined.composition.reduced_formula + "_10-20-2023_heavy_left_tot"
+        prefix = (
+            combined.composition.reduced_formula + "_10-20-2023_heavy_left_tot"
+        )
     extra_params = {}
     extra_params["tb3_params"] = tb3_params
     jobname_left = prefix + "_tb3_left"
@@ -82,14 +84,11 @@ def calc_iv_tb3(
     )
     en = calc.predict()
 
-
-
-
     jobname_right = prefix + "_tb3_right"
     extra_params["tb3_params"] = [
         "using ThreeBodyTB\nusing NPZ\n",
         'crys = makecrys("POSCAR")\n',
-        #"energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05,iters=500);\n",
+        # "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05,iters=500);\n",
         "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05,tot_charge=1.0,iters=500);\n",
         # "cfinal, tbc, energy, force, stress = relax_structure(crys,mixing_mode=:simple,mix=0.05);\n",
         # "println(cfinal)\n",
@@ -117,11 +116,6 @@ def calc_iv_tb3(
     )
     en = calc.predict()
 
-
-
-
-
-
     extra_params = {}
     extra_params["tb3_params"] = tb3_params
     jobname_left = prefix + "_tb3_left"
@@ -133,9 +127,6 @@ def calc_iv_tb3(
         extra_params=extra_params,
     )
     en = calc.predict()
-
-
-
 
     fname = os.path.join(jobname_all, "hk.npz")
     h = np.load(fname)
@@ -574,12 +565,12 @@ if __name__ == "__main__":
     # q=Atoms.from_poscar('q')
     # info = divide_atoms_left_right(combined=q, indx=0, lead_ratio=0.15)
     # print(info)
-    #atoms_left = Atoms.from_poscar("atk_right/POSCAR")
-    #atoms_right = Atoms.from_poscar("atk_right/POSCAR")
-    #atoms_middle = Atoms.from_poscar("atk_middle/POSCAR")
-    #calc_iv_tb3(
+    # atoms_left = Atoms.from_poscar("atk_right/POSCAR")
+    # atoms_right = Atoms.from_poscar("atk_right/POSCAR")
+    # atoms_middle = Atoms.from_poscar("atk_middle/POSCAR")
+    # calc_iv_tb3(
     #    atoms_left=atoms_left, atoms_right=atoms_right, combined=atoms_middle
-    #)
+    # )
     import sys
 
     x = lead_mat_designer(

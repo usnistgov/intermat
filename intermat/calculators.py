@@ -1,4 +1,5 @@
 """Module to calculate properties."""
+
 from jarvis.tasks.queue_jobs import Queue
 from jarvis.io.vasp.inputs import Poscar, Incar, Potcar
 from jarvis.core.kpoints import Kpoints3D
@@ -219,9 +220,9 @@ class Calc(object):
             if self.method == "eam_ase":
                 if "potential" not in self.extra_params:
                     # Download from https://doi.org/10.6084/m9.figshare.24187602
-                    self.extra_params[
-                        "potential"
-                    ] = "Mishin-Ni-Al-Co-2013.eam.alloy"
+                    self.extra_params["potential"] = (
+                        "Mishin-Ni-Al-Co-2013.eam.alloy"
+                    )
 
                 from ase.calculators.eam import EAM
 

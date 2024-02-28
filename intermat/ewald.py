@@ -244,9 +244,7 @@ class ewaldsum(object):
         Us = -self._eta / np.sqrt(np.pi) * np.sum(self._ZZ**2)
         # interaction with the neutralizing background
         Un = (
-            -(2 * np.pi / self._eta**2 / self._omega)
-            * self._ZZ.sum() ** 2
-            / 4
+            -(2 * np.pi / self._eta**2 / self._omega) * self._ZZ.sum() ** 2 / 4
         )
 
         # total coulomb energy

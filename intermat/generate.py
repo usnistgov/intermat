@@ -1,4 +1,5 @@
 """Module to generate interface combinations."""
+
 from jarvis.analysis.interface.zur import ZSLGenerator
 from jarvis.core.atoms import add_atoms, fix_pbc
 from jarvis.core.lattice import Lattice, lattice_coords_transformer
@@ -607,12 +608,12 @@ class InterfaceCombi(object):
                                             + str(subs_thickness)
                                         )
                                         chosen_info["interface_name"] = name
-                                        chosen_info[
-                                            "film_surface_name"
-                                        ] = film_surface_name
-                                        chosen_info[
-                                            "subs_surface_name"
-                                        ] = subs_surface_name
+                                        chosen_info["film_surface_name"] = (
+                                            film_surface_name
+                                        )
+                                        chosen_info["subs_surface_name"] = (
+                                            subs_surface_name
+                                        )
                                         # print("interface1", ats)
                                         film_sl = chosen_info["film_sl"]
                                         subs_sl = chosen_info["subs_sl"]
@@ -640,18 +641,18 @@ class InterfaceCombi(object):
                                         #     chosen_info["mismatch_u"],
                                         #     ats.num_atoms,
                                         # )
-                                        chosen_info[
-                                            "generated_interface"
-                                        ] = new_intf.to_dict()
+                                        chosen_info["generated_interface"] = (
+                                            new_intf.to_dict()
+                                        )
                                         chosen_info["interface"] = chosen_info[
                                             "interface"
                                         ].to_dict()
-                                        chosen_info[
-                                            "film_kplength"
-                                        ] = film_kplength
-                                        chosen_info[
-                                            "subs_kplength"
-                                        ] = subs_kplength
+                                        chosen_info["film_kplength"] = (
+                                            film_kplength
+                                        )
+                                        chosen_info["subs_kplength"] = (
+                                            subs_kplength
+                                        )
                                         gen_intfs.append(chosen_info)
 
                                         # print("interface2", new_intf)
