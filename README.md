@@ -165,10 +165,12 @@ dif, cbm, vbm, avg_max, efermi, formula, atoms, fin_en = locpot_mean(
 )
 ```
 ### Rapid structure screening / relaxation
-ALIGNN-FF, Ewald, TB?
+ALIGNN-FF, Ewald, Tight-binding etc.
 
 ### Computational Engines
-VASP, QE, LAMMPS.
+VASP, QE, GPAW, LAMMPS, ASE,...
+
+Details [here](https://github.com/usnistgov/intermat/blob/main/intermat/calculators.py#L199)
 
 ### Properties using post-processing (band alignment/offset)
 IU vs ASJ/STJ
@@ -180,4 +182,5 @@ Property prediction
 ## Curated dataset
 Experimental validation
 
+# More detailed documentation coming soon!
 
