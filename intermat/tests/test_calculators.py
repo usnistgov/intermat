@@ -34,7 +34,7 @@ def test_eam():
     )
     wads = x.calculate_wad(
         method="eam_ase",
-        extra_params={"potential": "Mishin-Ni-Al-Co-2013.eam.alloy"},
+        extra_params={"potential": pot},
     )
     print(len(wads))
 
@@ -52,7 +52,7 @@ def test_eam():
     plt.close()
 
 
-test_eam()
+# test_eam()
 # plt.show()
 
 

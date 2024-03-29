@@ -1,26 +1,28 @@
 """Module to generate interface combinations."""
 
 from jarvis.analysis.interface.zur import ZSLGenerator
-from jarvis.core.atoms import add_atoms, fix_pbc
+from jarvis.core.atoms import fix_pbc
 from jarvis.core.lattice import Lattice, lattice_coords_transformer
-from jarvis.tasks.queue_jobs import Queue
-from jarvis.io.vasp.inputs import Poscar, Incar, Potcar
-from jarvis.core.kpoints import Kpoints3D
 import os
-from jarvis.db.jsonutils import dumpjson
-from jarvis.tasks.vasp.vasp import VaspJob
 from jarvis.db.figshare import data as j_data
 import numpy as np
-from jarvis.analysis.structure.spacegroup import (
-    Spacegroup3D,
-    symmetrically_distinct_miller_indices,
-)
 from jarvis.analysis.defects.surface import Surface
-from jarvis.db.figshare import get_jid_data
 from jarvis.core.atoms import Atoms
 import pandas as pd
 import time
 from intermat.calculators import Calc
+
+# from jarvis.db.figshare import get_jid_data
+# from jarvis.db.jsonutils import dumpjson
+# from jarvis.tasks.vasp.vasp import VaspJob
+# from jarvis.core.atoms import add_atoms
+# from jarvis.tasks.queue_jobs import Queue
+# from jarvis.io.vasp.inputs import Poscar, Incar, Potcar
+# from jarvis.core.kpoints import Kpoints3D
+# from jarvis.analysis.structure.spacegroup import (
+#    Spacegroup3D,
+#    symmetrically_distinct_miller_indices,
+# )
 
 # TODO: Save InterFaceCombi.json
 
@@ -377,7 +379,7 @@ class InterfaceCombi(object):
                 props=props,
             ).center_around_origin([0.5, 0, 0])
         if self.lead_ratio is not None:
-            a = combined.lattice.abc[0]
+            # a = combined.lattice.abc[0]
             coords = combined.frac_coords
             lattice_mat = combined.lattice_mat
             elements = np.array(combined.elements)
@@ -449,7 +451,7 @@ class InterfaceCombi(object):
         vacuum=12.0,
     ):
         """Get interface."""
-        info = {}
+        # info = {}
         film_surf = Surface(
             film_atoms,
             indices=film_index,
@@ -477,8 +479,8 @@ class InterfaceCombi(object):
         return het
 
     def generate(self):
-        count = 0
-        cwd = self.working_dir
+        # count = 0
+        # cwd = self.working_dir
         gen_intfs = []
         for ii, i in enumerate(self.film_mats):
             for jj, j in enumerate(self.subs_mats):
@@ -615,8 +617,8 @@ class InterfaceCombi(object):
                                             subs_surface_name
                                         )
                                         # print("interface1", ats)
-                                        film_sl = chosen_info["film_sl"]
-                                        subs_sl = chosen_info["subs_sl"]
+                                        # film_sl = chosen_info["film_sl"]
+                                        # subs_sl = chosen_info["subs_sl"]
                                         disp_coords = []
                                         coords = ats.frac_coords
                                         elements = ats.elements
@@ -664,6 +666,7 @@ class InterfaceCombi(object):
         self, method="ewald", extra_params={}, do_surfaces=True, index=None
     ):
         x = self.generate()
+        print("len generated", len(x))
         if index is None:
             generated_interfaces = self.generated_interfaces
         else:
@@ -882,9 +885,15 @@ def semicon_mat_interface_workflow():
 
 def semicon_mat_interface_workflow2():
     dataset = j_data("dft_3d")
-    # Cu(867),Al(816),Ni(943),Pt(972),Cu(816),Ti(1029),Pd(963),Au(825),Ag(813),Hf(802), Nb(934)
-    # Ge(890), AlN(39), GaN(30), BN(62940), CdO(20092), CdS(8003), CdSe(1192), CdTe(23), ZnO(1195), ZnS(96), ZnSe(10591), ZnTe(1198), BP(1312), BAs(133719),
-    # BSb(36873), AlP(1327), AlAs(1372), AlSb(1408), GaP(8184), GaAs(1174), GaSb(1177), InN(1180), InP(1183), InAs(1186), InSb(1189), C(91), SiC(8158,8118,107), GeC(36018), SnC(36408), SiGe(105410), SiSn(36403), , Sn(1008)
+    # Cu(867),Al(816),Ni(943),Pt(972),Cu(816),Ti(1029),Pd(963),
+    # Au(825),Ag(813),Hf(802), Nb(934)
+    # Ge(890), AlN(39), GaN(30), BN(62940), CdO(20092), CdS(8003),
+    # CdSe(1192), CdTe(23), ZnO(1195), ZnS(96), ZnSe(10591),
+    # ZnTe(1198), BP(1312), BAs(133719),
+    # BSb(36873), AlP(1327), AlAs(1372), AlSb(1408), GaP(8184),
+    # GaAs(1174), GaSb(1177), InN(1180), InP(1183), InAs(1186),
+    # InSb(1189), C(91), SiC(8158,8118,107), GeC(36018),
+    # SnC(36408), SiGe(105410), SiSn(36403), , Sn(1008)
     combinations = [
         ["JVASP-1002", "JVASP-890", [0, 0, 1], [0, 0, 1]],
         ["JVASP-1002", "JVASP-890", [0, 0, 1], [1, 1, 1]],
@@ -1002,7 +1011,8 @@ def semicon_mat_interface_workflow2():
             index = np.argmin(wads)
             wads = x.calculate_wad(method="vasp", index=index)
             # wads = x.calculate_wad_vasp(sub_job=True)
-        except:
+        except Exception as exp:
+            print("exp", exp)
             pass
 
 
@@ -1026,13 +1036,20 @@ def quick_test():
         subs_ids=["JVASP-816"],
         # disp_intvl=0.1,
     ).generate()
+    print("x", len(x))
 
 
 def semicon_semicon_interface_workflow():
     dataset = j_data("dft_3d")
-    # Cu(867),Al(816),Ni(943),Pt(972),Cu(816),Ti(1029),Pd(963),Au(825),Ag(813),Hf(802), Nb(934)
-    # Ge(890), AlN(39), GaN(30), BN(62940), CdO(20092), CdS(8003), CdSe(1192), CdTe(23), ZnO(1195), ZnS(96), ZnSe(10591), ZnTe(1198), BP(1312), BAs(133719),
-    # BSb(36873), AlP(1327), AlAs(1372), AlSb(1408), GaP(8184), GaAs(1174), GaSb(1177), InN(1180), InP(1183), InAs(1186), InSb(1189), C(91), SiC(8158,8118,107), GeC(36018), SnC(36408), SiGe(105410), SiSn(36403), , Sn(1008)
+    # Cu(867),Al(816),Ni(943),Pt(972),Cu(816),Ti(1029),Pd(963),
+    # Au(825),Ag(813),Hf(802), Nb(934)
+    # Ge(890), AlN(39), GaN(30), BN(62940), CdO(20092), CdS(8003),
+    # CdSe(1192), CdTe(23), ZnO(1195), ZnS(96), ZnSe(10591), ZnTe(1198),
+    # BP(1312), BAs(133719),
+    # BSb(36873), AlP(1327), AlAs(1372), AlSb(1408), GaP(8184), GaAs(1174),
+    # GaSb(1177), InN(1180), InP(1183), InAs(1186), InSb(1189), C(91),
+    # SiC(8158,8118,107), GeC(36018), SnC(36408),
+    # SiGe(105410), SiSn(36403), , Sn(1008)
     combinations = [
         ["JVASP-1372", "JVASP-1174", [0, 0, 1], [0, 0, 1]],
         # ["JVASP-39", "JVASP-30", [0, 0, 1], [0, 0, 1]],
@@ -1055,7 +1072,8 @@ def semicon_semicon_interface_workflow():
             wads = np.array(x.wads["wads"])
             index = np.argmin(wads)
             wads = x.calculate_wad(method="vasp", index=index)
-        except:
+        except Exception as exp:
+            print("exp", exp)
             pass
 
 
@@ -1079,7 +1097,7 @@ def quick_compare(
         seperations=seperations,
     )
     t1 = time.time()
-    model_path = "temp1"
+    # model_path = "temp1"
     wads = x.calculate_wad(method="alignn")
     # wads = x.calculate_wad_alignn(model_path=model_path)
     wads = np.array(x.wads["alignn_wads"])

@@ -2,23 +2,15 @@
 
 from jarvis.tasks.queue_jobs import Queue
 from jarvis.io.vasp.inputs import Poscar, Incar, Potcar
+from jarvis.io.vasp.outputs import Vasprun, Outcar
 from jarvis.core.kpoints import Kpoints3D
 import os
 from jarvis.db.jsonutils import dumpjson
 from jarvis.tasks.vasp.vasp import VaspJob
-from jarvis.tasks.lammps.lammps import LammpsJob, JobFactory
+from jarvis.tasks.lammps.lammps import LammpsJob
 from jarvis.tasks.qe.qe import QEjob
-from jarvis.db.figshare import data as j_data
 import numpy as np
-from jarvis.analysis.structure.spacegroup import (
-    Spacegroup3D,
-    symmetrically_distinct_miller_indices,
-)
-from jarvis.analysis.defects.surface import Surface
-from jarvis.db.figshare import get_jid_data
 from jarvis.core.atoms import Atoms, ase_to_atoms
-import pandas as pd
-import time
 from ase.optimize.fire import FIRE
 from ase.constraints import ExpCellFilter
 from jarvis.db.jsonutils import loadjson
@@ -68,7 +60,8 @@ def template_extra_params(method="vasp"):
         lines = [
             "using ThreeBodyTB\nusing NPZ\n",
             'crys = makecrys("POSCAR")\n',
-            # "energy, tbc, flag = scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
+            # "energy, tbc, flag =
+            # scf_energy(crys,mixing_mode=:simple,mix=0.05);\n",
             "cfinal, tbc, energy, force, stress = relax_structure(crys);\n",
             # "println(cfinal)\n",
             "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
@@ -87,7 +80,7 @@ def template_extra_params(method="vasp"):
             "write(file,string(ThreeBodyTB.TB.get_dq(tbc)))\n",
             "end\n",
             'open("band_summary","w") do file\n',
-            'println("band_summary",(ThreeBodyTB.BandStruct.band_summary(tbc)))\n',
+            'println("bandst.",(ThreeBodyTB.BandStruct.band_summary(tbc)))\n',
             "write(file,string(ThreeBodyTB.BandStruct.band_summary(tbc)))\n",
             "end\n",
         ]
@@ -131,22 +124,24 @@ def template_extra_params(method="vasp"):
             "cell": {"cell_dynamics": "'bfgs'", "cell_dofree": "'all'"},
         }
         info["qe_params"] = qe_params
-        info["qe_cmd"] = "/cluster/bin/pw.x"
+        info["qe_cmd"] = "pw.x"
         extra_lines = "conda activate mini_alignn\n"
         info["extra_lines"] = extra_lines
         info["walltime"] = "70-00:00:00"
         info["queue"] = "epyc"
     elif method == "lammps":
         lammps_params = dict(
-            cmd="/users/knc6/Software/LAMMPS/lammps-master/src/lmp_serial<in.main>out",
-            lammps_cmd="/users/knc6/Software/LAMMPS/lammps-master/src/lmp_serial<in.main>out",
+            cmd="lmp_serial<in.main>out",
+            lammps_cmd="lmp_serial<in.main>out",
             pair_style="eam/alloy",
-            pair_coeff="/users/knc6/Software/LAMMPS/lammps-master/potentials/Al_zhou.eam.alloy",
+            pair_coeff="lammps/potentials/Al_zhou.eam.alloy",
             atom_style="charge",
-            control_file="/users/knc6/Software/mini_alignn/jarvis/jarvis/tasks/lammps/templates/inelast.mod",
+            control_file="jarvis/jarvis/tasks/lammps/templates/inelast.mod",
         )
         info["lammps_params"] = lammps_params
     elif method == "gpaw":
+        from gpaw import Davidson
+
         info["gpaw_params"] = dict(
             smearing=0.01,
             cutoff=400,
@@ -219,7 +214,8 @@ class Calc(object):
             atoms = self.atoms.ase_converter()
             if self.method == "eam_ase":
                 if "potential" not in self.extra_params:
-                    # Download from https://doi.org/10.6084/m9.figshare.24187602
+                    # Download from
+                    # https://doi.org/10.6084/m9.figshare.24187602
                     self.extra_params["potential"] = (
                         "Mishin-Ni-Al-Co-2013.eam.alloy"
                     )
@@ -230,8 +226,8 @@ class Calc(object):
             elif self.method == "alignn_ff":
                 from alignn.ff.ff import (
                     AlignnAtomwiseCalculator,
-                    default_path,
-                    wt01_path,
+                    # default_path,
+                    # wt01_path,
                     wt10_path,
                 )
 
@@ -248,7 +244,7 @@ class Calc(object):
                 pot = matgl.load_model("M3GNet-MP-2021.2.8-PES")
                 calculator = M3GNetCalculator(pot)
             elif self.method == "gpaw":
-                from gpaw import GPAW, PW, FermiDirac, Davidson
+                from gpaw import GPAW, PW, FermiDirac
 
                 if "gpaw_params" not in self.extra_params:
                     self.extra_params["gpaw_params"] = template_extra_params(
@@ -301,7 +297,7 @@ class Calc(object):
                 and not self.relax_cell
             ):
                 atoms.calc = calculator
-                forces = atoms.get_forces()
+                # forces = atoms.get_forces()
                 energy = atoms.get_potential_energy()
                 # stress = atoms.get_stress()
                 info["energy"] = energy
@@ -361,7 +357,7 @@ class Calc(object):
         isif = 2
         if self.relax_cell:
             isif = 3
-            self.extra_params["inc"]["ISIF"] = 3
+            self.extra_params["inc"]["ISIF"] = isif
 
         inc = Incar(self.extra_params["inc"])
 
@@ -477,7 +473,7 @@ class Calc(object):
         # print("")
         # print("")
         atoms = self.atoms
-        pos = Poscar(self.atoms)
+        # pos = Poscar(self.atoms)
         pos_name = "POSCAR"
         cwd = os.getcwd()
         name_dir = os.path.join(cwd, self.jobname)
@@ -522,7 +518,7 @@ class Calc(object):
             f.close()
 
         atoms = self.atoms
-        pos = Poscar(self.atoms)
+        # pos = Poscar(self.atoms)
         pos_name = "POSCAR-" + self.jobname + ".vasp"
         cwd = os.getcwd()
         name_dir = os.path.join(cwd, self.jobname)
@@ -548,6 +544,7 @@ class Calc(object):
             self.extra_params = template_extra_params(method="qe")
         else:
             qe_params = self.extra_params["qe_params"]
+            qe_cmd = self.extra_params["qe_cmd"]
         qejob = QEjob(
             atoms=atoms,
             input_params=qe_params,
@@ -588,7 +585,7 @@ class Calc(object):
 
     def lammps(self):
         atoms = self.atoms
-        pos = Poscar(self.atoms)
+        # pos = Poscar(self.atoms)
         pos_name = "POSCAR-" + self.jobname + ".vasp"
         cwd = os.getcwd()
         name_dir = os.path.join(cwd, self.jobname)
@@ -599,12 +596,12 @@ class Calc(object):
 
         if "lammps_params" not in self.extra_params:
             lammps_params = dict(
-                cmd="/users/knc6/Software/LAMMPS/lammps-master/src/lmp_serial<in.main>out",
-                lammps_cmd="/users/knc6/Software/LAMMPS/lammps-master/src/lmp_serial<in.main>out",
+                cmd="lmp_serial<in.main>out",
+                lammps_cmd="lmp_serial<in.main>out",
                 pair_style="eam/alloy",
-                pair_coeff="/users/knc6/Software/LAMMPS/lammps-master/potentials/Al_zhou.eam.alloy",
+                pair_coeff="potentials/Al_zhou.eam.alloy",
                 atom_style="charge",
-                control_file="/users/knc6/Software/mini_alignn/jarvis/jarvis/tasks/lammps/templates/inelast.mod",
+                control_file="jarvis/tasks/lammps/templates/inelast.mod",
             )
         else:
             lammps_params = self.extra_params["lammps_params"]
