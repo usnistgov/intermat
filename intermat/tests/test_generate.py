@@ -1,3 +1,4 @@
+"""
 # from intermat.known_mats import semicons
 from jarvis.analysis.defects.surface import Surface
 from jarvis.analysis.structure.spacegroup import (
@@ -74,3 +75,4 @@ def test_interface():
         )
         combined = combined.center(vacuum=seperations[0] - tol)
         print(index, combined)
+"""
