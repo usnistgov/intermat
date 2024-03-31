@@ -137,7 +137,7 @@ def main(config_file_or_dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Generate interface with Intermat."
+        description="Generate interface with InterMat."
     )
     parser.add_argument(
         "--config_file",

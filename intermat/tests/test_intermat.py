@@ -2,9 +2,13 @@ from intermat.run_intermat import main
 import os
 from jarvis.db.jsonutils import loadjson
 from intermat.generate import InterfaceCombi, lead_mat_designer
+from intermat.analyze import offset
+import glob
 
 config_file = os.path.join(os.path.dirname(__file__), "config.json")
 config_dat = loadjson(config_file)
+
+offse_example = os.path.join(os.path.dirname(__file__), "forpytest.zip")
 
 
 def test_gen():
@@ -35,7 +39,7 @@ def test_eam_ase():
     main(config_dat)
 
 
-def test_eam_ase():
+def test_ewald():
     config_dat["calculator_method"] = "ewald"
     main(config_dat)
 
@@ -43,3 +47,26 @@ def test_eam_ase():
 def test_eam_lammps():
     config_dat["calculator_method"] = "lammps"
     main(config_dat)
+
+
+def test_offset():
+    cmd = "unzip " + offse_example
+    os.system(cmd)
+    os.chdir("forpytest")
+    for i in glob.glob("Int*/opt_*/opt*/LOCPOT"):
+        phi = offset(fname=i, left_index=2)
+        print("phi", phi)
+        assert phi < -0.2
+    os.chdir("..")
+    cmd = "rm -r forpytest"
+    os.system(cmd)
+
+
+# test_offset()
+# def test_qe():
+#    config_dat["calculator_method"] = "qe"
+#    config_dat["kp_length"] = 0
+#    config_dat["disp_intvl"] = 0
+#    main(config_dat)
+
+# test_qe()
