@@ -3,7 +3,7 @@ from typing import List
 import os
 from typing import Literal
 from typing import Dict
-from alignn.utils import BaseSettings
+from pydantic_settings import BaseSettings
 
 try:
     from gpaw import Davidson
@@ -106,9 +106,9 @@ template_lammps_params = dict(
     cmd="lmp_serial<in.main>out",
     lammps_cmd="lmp_serial<in.main>out",
     pair_style="eam/alloy",
-    pair_coeff="lammps/potentials/Al_zhou.eam.alloy",
+    pair_coeff="tests/Mishin-Ni-Al-Co-2013.eam.alloy",
     atom_style="charge",
-    control_file="jarvis/jarvis/tasks/lammps/templates/inelast.mod",
+    control_file="tests/inelast.mod",
 )
 
 template_gpaw_params = dict(
@@ -168,6 +168,7 @@ class IntermatConfig(BaseSettings):
     from_conventional_structure_subs: bool = True
     dataset: str = "dft_3d"
     verbose: bool = True
+    plot_wads: bool = True
     # Calculator generic config
     extra_lines: str = (
         "\nmodule load vasp/6.3.1\n" + "conda activate my_intermat\n"

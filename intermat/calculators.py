@@ -589,6 +589,7 @@ class Calc(object):
         atoms = self.atoms
         # pos = Poscar(self.atoms)
         pos_name = "POSCAR-" + self.jobname + ".vasp"
+        # print('self.jobname',self.jobname)
         cwd = os.getcwd()
         name_dir = os.path.join(cwd, self.jobname)
         if not os.path.exists(name_dir):
@@ -596,24 +597,14 @@ class Calc(object):
         os.chdir(name_dir)
         atoms.write_poscar(filename=pos_name)
 
-        if "lammps_params" not in self.extra_params:
-            lammps_params = dict(
-                cmd="lmp_serial<in.main>out",
-                lammps_cmd="lmp_serial<in.main>out",
-                pair_style="eam/alloy",
-                pair_coeff="potentials/Al_zhou.eam.alloy",
-                atom_style="charge",
-                control_file="jarvis/tasks/lammps/templates/inelast.mod",
-            )
-        else:
-            lammps_params = self.extra_params["lammps_params"]
+        lammps_params = self.extra_params["lammps_params"]
         parameters = {
-            "pair_style": lammps_params["pair_style"],
+            "pair_style": (lammps_params["pair_style"]),
             "pair_coeff": lammps_params["pair_coeff"],
             "atom_style": lammps_params["atom_style"],
-            "control_file": lammps_params["control_file"],
+            "control_file": (lammps_params["control_file"]),
         }
-
+        # print('parameters',parameters)
         cmd = lammps_params["lammps_cmd"]
         # Test LammpsJob
         en, final_str, forces = LammpsJob(

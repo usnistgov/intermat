@@ -3,27 +3,41 @@
 import argparse
 import sys
 import time
+import numpy as np
+import os
+import pprint
+from matplotlib import cm
+import matplotlib.pyplot as plt
 from jarvis.core.atoms import Atoms
 from intermat.generate import InterfaceCombi
 from intermat.config import IntermatConfig
-import numpy as np
 from jarvis.db.jsonutils import loadjson
-import pprint
 from jarvis.db.figshare import get_jid_data
 
-parser = argparse.ArgumentParser(
-    description="Generate interface with Intermat."
-)
-parser.add_argument(
-    "--config_file",
-    default="config.json",
-    help="Settings file for intermat.",
-)
 
-
-if __name__ == "__main__":
-    args = parser.parse_args(sys.argv[1:])
-    config_dat = loadjson(args.config_file)
+def main(config_file_or_dict):
+    if isinstance(config_file_or_dict, dict):
+        config_dat = config_file_or_dict
+    else:
+        config_dat = loadjson(config_file_or_dict)
+    # A few default setting check
+    if not os.path.exists(config_dat["lammps_params"]["pair_coeff"]):
+        config_dat["lammps_params"]["pair_coeff"] = os.path.join(
+            os.path.dirname(__file__),
+            "tests",
+            "Mishin-Ni-Al-Co-2013.eam.alloy",
+        )
+    if not os.path.exists(config_dat["lammps_params"]["control_file"]):
+        config_dat["lammps_params"]["control_file"] = os.path.join(
+            os.path.dirname(__file__), "tests", "relax.mod"
+        )
+    if not os.path.exists(config_dat["potential"]):
+        config_dat["potential"] = os.path.join(
+            os.path.dirname(__file__),
+            "tests",
+            "Mishin-Ni-Al-Co-2013.eam.alloy",
+        )
+    # Make Pydantic configs
     config = IntermatConfig(**config_dat)
     pprint.pprint(config.dict())
     if config.film_file_path != "":
@@ -79,13 +93,10 @@ if __name__ == "__main__":
                 print("Structure ", ii)
                 print(i)
                 print()
-
+    wads = ""
     if config.calculator_method != "":
-        print("combined_atoms", combined_atoms)
-        # extra_params=config.qe_params|config.lammps_params|config.gpaw_params|config.vasp_params
-        # print('extra_params',pprint.pprint(extra_params))
-        # if config.calculator_method=='qe':
-        #       extra_params=config.qe_params
+        # print("combined_atoms", combined_atoms)
+
         wads = x.calculate_wad(
             method=config.calculator_method,
             do_surfaces=config.do_surfaces,
@@ -94,9 +105,44 @@ if __name__ == "__main__":
         print("w_adhesion (J/m2)", wads)
         wads = np.array(x.wads["wads"])
         index = np.argmin(wads)
-        combined = Atoms.from_dict(
+        combined_atoms = Atoms.from_dict(
             x.generated_interfaces[index]["generated_interface"]
         )
-        print("Generated interface:\n", combined)
+        print("Generated interface:\n", combined_atoms)
+        if config.plot_wads:
+
+            X = x.X
+            Y = x.Y
+
+            wads = np.array(wads).reshape(len(X), len(Y))
+
+            fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+            surf = ax.plot_surface(
+                X, Y, wads, cmap=cm.coolwarm, linewidth=0, antialiased=False
+            )
+            fig.colorbar(surf, shrink=0.5, aspect=5)
+            plt.savefig("intmat.png")
+            plt.close()
+            # import plotly.graph_objects as go
+            # fig = go.Figure(data=[go.Surface(z=wads, x=X, y=Y)])
+            # fig.show()
     t2 = time.time()
     print("Time taken:", t2 - t1)
+    info = {}
+    info["syste"] = combined_atoms
+    info["time_taken"] = t2 - t1
+    info["wads"] = wads
+    return wads
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Generate interface with Intermat."
+    )
+    parser.add_argument(
+        "--config_file",
+        default="config.json",
+        help="Settings file for intermat.",
+    )
+    args = parser.parse_args(sys.argv[1:])
+    main(config_file=args.config_file)

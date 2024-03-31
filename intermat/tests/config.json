@@ -1,13 +1,13 @@
 {
-    "calculator_method": "eam_ase",
+    "calculator_method": "alignn_ff",
     "film_file_path": "",
     "substrate_file_path": "",
     "film_jid": "JVASP-816",
     "substrate_jid": "JVASP-816",
     "film_index": "0_0_1",
     "substrate_index": "0_0_1",
-    "film_thickness": 2,
-    "substrate_thickness": 2,
+    "film_thickness": 0,
+    "substrate_thickness": 0,
     "from_conventional_structure_film": true,
     "from_conventional_structure_subs": true,
     "max_area": 300,
@@ -16,7 +16,7 @@
     "rotate_xz": false,
     "seperation": 2.5,
     "vacuum_interface": 2,
-    "disp_intvl": 0,
+    "disp_intvl": 0.25,
     "do_surfaces": true,
     "copy_files": [],
     "dataset": "dft_3d",
@@ -24,7 +24,7 @@
     "sub_job": false,
     "kp_length": 0,
     "queue": "rack1,rack2",
-    "verbose": true,
+    "verbose": false,
     "walltime": "30-00:00:00",
     "gpaw_params": {
         "basis": "szp(dzp)",
@@ -54,9 +54,9 @@
     "lammps_params": {
         "atom_style": "charge",
         "cmd": "lmp_serial<in.main>out",
-        "control_file": "jarvis/jarvis/tasks/lammps/templates/inelast.mod",
+        "control_file": "relax.mod",
         "lammps_cmd": "lmp_serial<in.main>out",
-        "pair_coeff": "tests/Mishin-Ni-Al-Co-2013.eam.alloy",
+        "pair_coeff": "Mishin-Ni-Al-Co-2013.eam.alloy",
         "pair_style": "eam/alloy"
     },
     "qe_params": {
