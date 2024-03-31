@@ -60,6 +60,7 @@ if __name__ == "__main__":
         seperations=[float(config.seperation)],
         rotate_xz=rotate_xz,
         dataset=[None],
+        vacuum_interface=config.vacuum_interface,
     )
 
     combined_atoms = [
