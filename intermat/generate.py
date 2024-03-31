@@ -11,6 +11,7 @@ from jarvis.core.atoms import Atoms
 import pandas as pd
 import time
 from intermat.calculators import Calc
+from tqdm import tqdm
 
 # from jarvis.db.figshare import get_jid_data
 # from jarvis.db.jsonutils import dumpjson
@@ -144,8 +145,8 @@ class InterfaceCombi(object):
         self.subs_kplengths = subs_kplengths
         self.dataset = dataset
         self.id_tag = id_tag
-        print("self.film_ids", self.film_ids)
-        print("self.subs_ids", self.subs_ids)
+        # print("self.film_ids", self.film_ids)
+        # print("self.subs_ids", self.subs_ids)
         if not self.dataset:
             self.dataset = j_data("dft_3d")
         if not film_mats:
@@ -166,8 +167,8 @@ class InterfaceCombi(object):
                 subs_kplengths.append(self.get_id_atoms(i)["kp_length"])
             self.subs_kplengths = subs_kplengths
             self.subs_mats = subs_mats
-        print("self.film_mats", self.film_mats)
-        print("self.subs_mats", self.subs_mats)
+        # print("self.film_mats", self.film_mats)
+        # print("self.subs_mats", self.subs_mats)
         self.disp_intvl = disp_intvl
         self.seperations = seperations
         self.film_indices = film_indices
@@ -209,8 +210,8 @@ class InterfaceCombi(object):
             self.xy = xy
             self.X = X
             self.Y = Y
-            print("X", X.shape)
-            print("Y", Y.shape)
+            # print("X", X.shape)
+            # print("Y", Y.shape)
 
     def get_id_atoms(self, id=""):
         for i in self.dataset:
@@ -672,7 +673,7 @@ class InterfaceCombi(object):
         else:
             generated_interfaces = [self.generated_interfaces[index]]
         ew_wads = []
-        for i in generated_interfaces:
+        for i in tqdm(generated_interfaces):
             # film_en = atom_to_energy(Atoms.from_dict(i["film_sl"]))
             # subs_en = atom_to_energy(Atoms.from_dict(i["subs_sl"]))
             film_atoms = Atoms.from_dict(i["film_surf"])
@@ -683,8 +684,13 @@ class InterfaceCombi(object):
             subs_surface_name = i["subs_surface_name"] + "_" + method
             intf_name = i["interface_name"] + "_" + method
             if do_surfaces:
+                # TODO: Fix kp length as an option
                 # Film
-                extra_params["kp_length"] = i["film_kplength"]
+                try:
+                    extra_params["kp_length"] = i["film_kplength"]
+                except Exception:
+                    # extra_params["kp_length"] = extra_params
+                    pass
                 calc = Calc(
                     method=method,
                     atoms=film_atoms,
@@ -696,7 +702,11 @@ class InterfaceCombi(object):
 
             if do_surfaces:
                 # Substrate
-                extra_params["kp_length"] = i["subs_kplength"]
+                try:
+                    extra_params["kp_length"] = i["subs_kplength"]
+                except Exception:
+                    # extra_params["kp_length"] = extra_params
+                    pass
                 calc = Calc(
                     method=method,
                     atoms=subs_atoms,

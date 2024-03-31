@@ -289,7 +289,7 @@ class Calc(object):
             else:
                 print("ASE Calc not implemented:", self.method)
             atoms.calc = calculator
-            print("calculator", self.method)
+            # print("calculator", self.method)
             info = {}
             if (
                 self.energy_only
@@ -540,11 +540,13 @@ class Calc(object):
         else:
             kp = Kpoints3D(kpoints=[[a, b, c]])
 
-        if "qe_params" not in self.extra_params:
-            self.extra_params = template_extra_params(method="qe")
-        else:
-            qe_params = self.extra_params["qe_params"]
-            qe_cmd = self.extra_params["qe_cmd"]
+        # if "qe_params" not in self.extra_params:
+        #    self.extra_params = template_extra_params(method="qe")
+        # else:
+        #    qe_params = self.extra_params["qe_params"]
+        #    qe_cmd = self.extra_params["qe_cmd"]
+        qe_params = self.extra_params["qe_params"]["qe_params"]
+        qe_cmd = self.extra_params["qe_params"]["qe_cmd"]
         qejob = QEjob(
             atoms=atoms,
             input_params=qe_params,

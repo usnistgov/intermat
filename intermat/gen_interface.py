@@ -5,85 +5,49 @@ import sys
 import time
 from jarvis.core.atoms import Atoms
 from intermat.generate import InterfaceCombi
+from intermat.config import IntermatConfig
 import numpy as np
+from jarvis.db.jsonutils import loadjson
+import pprint
+from jarvis.db.figshare import get_jid_data
 
 parser = argparse.ArgumentParser(
     description="Generate interface with Intermat."
 )
 parser.add_argument(
-    "--film",
-    default="POSCAR1",
-    help="First file (film).",
-)
-parser.add_argument(
-    "--substrate",
-    default="POSCAR2",
-    help="Second file (substrate).",
-)
-parser.add_argument(
-    "--film_index",
-    default="0_0_1",
-    help="Film index",
-)
-parser.add_argument(
-    "--substrate_index",
-    default="0_0_1",
-    help="substrate index",
-)
-parser.add_argument(
-    "--film_thickness",
-    default=16,
-    help="Thickness of film in Angstrom",
-)
-parser.add_argument(
-    "--substrate_thickness",
-    default=16,
-    help="Thickness of substrate in Angstrom",
-)
-
-parser.add_argument(
-    "--seperation",
-    default=2.5,
-    help="Distance between substrate and film.",
-)
-parser.add_argument(
-    "--vacuum_interface",
-    default=2,
-    help="Vacuum padding for interfacein Angstrom."
-    + " Smaller values such as 2 gives ASJ interface,"
-    + " Large values such as 8 gives STJ interfaces",
-)
-parser.add_argument(
-    "--rotate_xz",
-    default="False",
-    help="Whether to rotate the interface",
-)
-parser.add_argument(
-    "--disp_intvl",
-    default=0,
-    help="Whether to allow xy-plane scan."
-    + "A smal value between -0.5 to 0.5 will generate multiple interfaces"
-    + " and will try to find eneregtically stable one.",
-)
-
-parser.add_argument(
-    "--fast_scan_method",
-    default="ewald",
-    help="Pre-selection method for interface scan:"
-    + " ewald, alignn_ff, eam_ase  etc."
-    + ". Only allowed if disp_intvl>0. "
-    + "For more involved method such as DFT, docs provided later",
+    "--config_file",
+    default="config.json",
+    help="Settings file for intermat.",
 )
 
 
 if __name__ == "__main__":
     args = parser.parse_args(sys.argv[1:])
-    film_mat = Atoms.from_poscar(args.film)
-    sub_mat = Atoms.from_poscar(args.substrate)
-    film_index = [int(i) for i in args.film_index.split("_")]
-    subs_index = [int(i) for i in args.substrate_index.split("_")]
-    rotate_xz = [True if args.rotate_xz.lower() == "true" else False]
-    disp_intvl = float(args.disp_intvl)
+    config_dat = loadjson(args.config_file)
+    config = IntermatConfig(**config_dat)
+    pprint.pprint(config.dict())
+    if config.film_file_path != "":
+        film_mat = Atoms.from_poscar(config.film_file_path)
+    elif config.film_jid != "":
+        film_mat = Atoms.from_dict(
+            get_jid_data(jid=config.film_jid, dataset=config.dataset)["atoms"]
+        )
+    else:
+        raise ValueError("Enter a valid film_file_path or film_jid")
+    if config.substrate_file_path != "":
+        sub_mat = Atoms.from_poscar(config.substrate_file_path)
+    elif config.substrate_jid != "":
+        sub_mat = Atoms.from_dict(
+            get_jid_data(jid=config.substrate_jid, dataset=config.dataset)[
+                "atoms"
+            ]
+        )
+    else:
+        raise ValueError("Enter a valid substrate_file_path or substrate_jid")
+    film_index = [int(i) for i in config.film_index.split("_")]
+    subs_index = [int(i) for i in config.substrate_index.split("_")]
+    rotate_xz = config.rotate_xz
+    disp_intvl = config.disp_intvl
     t1 = time.time()
     x = InterfaceCombi(
         film_mats=[film_mat],
@@ -91,26 +55,42 @@ if __name__ == "__main__":
         film_indices=[film_index],
         subs_indices=[subs_index],
         disp_intvl=disp_intvl,
-        film_thicknesses=[float(args.film_thickness)],
-        subs_thicknesses=[float(args.substrate_thickness)],
-        seperations=[float(args.seperation)],
+        film_thicknesses=[float(config.film_thickness)],
+        subs_thicknesses=[float(config.substrate_thickness)],
+        seperations=[float(config.seperation)],
         rotate_xz=rotate_xz,
         dataset=[None],
     )
+
+    combined_atoms = [
+        Atoms.from_dict(i["generated_interface"]) for i in x.generate()
+    ]
+    print("Number of generated interface: ", len(combined_atoms))
     if disp_intvl == 0:
         print(
             "Quick interface generation with no scan."
             + " It might be energetically very high/less stable."
         )
-        combined = Atoms.from_dict(x.generate()[0]["generated_interface"])
-
-        print("Generated interface:\n", combined)
+        print(combined_atoms[0])
     else:
-        # For more involved method such as VASP etc. docs provided later
+        if config.verbose:
+            for ii, i in enumerate(combined_atoms):
+                print("Structure ", ii)
+                print(i)
+                print()
+
+    if config.calculator_method != "":
+        print("combined_atoms", combined_atoms)
+        # extra_params=config.qe_params|config.lammps_params|config.gpaw_params|config.vasp_params
+        # print('extra_params',pprint.pprint(extra_params))
+        # if config.calculator_method=='qe':
+        #       extra_params=config.qe_params
         wads = x.calculate_wad(
-            method=args.fast_scan_method,
+            method=config.calculator_method,
+            do_surfaces=config.do_surfaces,
+            extra_params=config.dict(),
         )
-        print("len w_adhesion", wads)
+        print("w_adhesion (J/m2)", wads)
         wads = np.array(x.wads["wads"])
         index = np.argmin(wads)
         combined = Atoms.from_dict(
