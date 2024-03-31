@@ -8,12 +8,12 @@ from jarvis.db.figshare import data as j_data
 import numpy as np
 from jarvis.analysis.defects.surface import Surface
 from jarvis.core.atoms import Atoms
-import pandas as pd
-import time
 from intermat.calculators import Calc
 from tqdm import tqdm
 
 # from jarvis.db.figshare import get_jid_data
+# import pandas as pd
+# import time
 # from jarvis.db.jsonutils import dumpjson
 # from jarvis.tasks.vasp.vasp import VaspJob
 # from jarvis.core.atoms import add_atoms
