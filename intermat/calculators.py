@@ -275,11 +275,15 @@ class Calc(object):
                     txt=self.extra_params["gpaw_params"]["out_file"],
                     spinpol=self.extra_params["gpaw_params"]["spinpol"],
                     nbands=self.extra_params["gpaw_params"]["nbands"],
-                    # symmetry=symmetry,
+                    maxiter=self.extra_params["gpaw_params"]["maxiter"],
+                    # symmetry=self.extra_params["gpaw_params"]["symmetry"],
                     # parallel=parallel,
-                    # convergence=convergence,
+                    convergence=self.extra_params["gpaw_params"][
+                        "convergence"
+                    ],
                     # eigensolver=eigensolver,
                 )
+                print("calculator", calculator)
             elif self.method == "emt":
                 from ase.calculators.emt import EMT
 
@@ -528,6 +532,7 @@ class Calc(object):
         atoms.write_poscar(filename=pos_name)
         if "kp_length" not in self.extra_params:
             kp_length = 30
+            print("Setting kp_length", kp_length)
         else:
             kp_length = self.extra_params["kp_length"]
         kp = Kpoints3D().automatic_length_mesh(

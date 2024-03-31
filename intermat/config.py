@@ -1,13 +1,11 @@
-import subprocess
 from typing import List
-import os
 from typing import Literal
 from typing import Dict
 from pydantic_settings import BaseSettings
 
 try:
     from gpaw import Davidson
-except Exception as exp:
+except Exception:
     pass
 template_vasp_incar_dict = dict(
     PREC="Accurate",
@@ -117,7 +115,7 @@ template_gpaw_params = dict(
     xc="PBE",
     basis="szp(dzp)",
     mode="lcao",
-    spinpol=True,
+    spinpol=False,
     nbands="120%",
     symmetry="on",
     parallel={
@@ -125,12 +123,13 @@ template_gpaw_params = dict(
         "domain": 2,
         "augment_grids": True,
     },
-    maxiter=1000,
-    convergence={"density": 1e-12, "energy": 1e-1},
+    maxiter=100,
+    convergence={"energy": 1},
+    # convergence={"density": 1e-12, "energy": 1e-1},
     eigensolver=Davidson(niter=2),
     out_file="gs.out",
     out_gpw="out.gpw",
-    kp_length=30,
+    kp_length=10,
 )
 
 
@@ -183,7 +182,7 @@ class IntermatConfig(BaseSettings):
         "vasp_cmd": "mpirun vasp_std",
         "inc": template_vasp_incar_dict,
     }
-    kp_length: int = 30
+    kp_length: int = 0
     # Calculator tb3 config
     tb3_lines: List = template_tb3_lines
     # Calculator qe config

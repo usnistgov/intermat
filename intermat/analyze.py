@@ -8,8 +8,10 @@ import numpy as np
 import re
 from ase.calculators.vasp import VaspChargeDensity
 from scipy.signal import find_peaks
-import glob
 from jarvis.io.vasp.outputs import Outcar
+from jarvis.io.vasp.outputs import recast_array_on_uniq_array_elements
+from matplotlib.gridspec import GridSpec
+from jarvis.io.vasp.outputs import Vasprun
 
 
 step_size = 10
@@ -265,7 +267,82 @@ def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=False):
     return phi
 
 
+def atomdos(
+    vrun_file="",
+    uniq_colors=["r", "g", "b", "orange", "cyan", "pink"],
+    num_atoms_include=None,
+):
+
+    vrun = Vasprun(vrun_file)
+    # spin_pol = self.is_spin_polarized
+    atoms = vrun.all_structures[-1]
+    num_atoms = atoms.num_atoms
+    if num_atoms_include is None:
+        num_atoms_include = num_atoms
+    elements = atoms.elements
+    unique_elements = atoms.uniq_species
+    pdos = vrun.partial_dos_spdf  # spin,atom,spdf
+    energy = pdos[0][0]["energy"] - vrun.efermi
+    element_dict = recast_array_on_uniq_array_elements(
+        unique_elements, elements
+    )
+    valid_keys = []
+    info = {}
+    info["spin_up_info"] = {}
+    info["spin_down_info"] = {}
+    info["energy"] = energy
+    for i in pdos[0][0].keys():
+        if "energ" not in i:
+            valid_keys.append(i)
+    # print (valid_keys)
+    spin_up_info = {}
+    for i in range(num_atoms):
+        spin_up_info[i] = np.zeros(len(energy))
+    for atom in range(num_atoms):
+        for k in valid_keys:
+            spin_up_info[atom] += pdos[0][atom][k]
+
+    info["spin_up_info"] = spin_up_info
+    if vrun.is_spin_polarized:
+        spin_down_info = {}
+        for i in range(num_atoms):
+            spin_down_info[i] = np.zeros(len(energy))
+        for atom in range(num_atoms):
+            for k in valid_keys:
+                spin_up_info[atom] += -1 * pdos[0][atom][k]
+
+        info["spin_down_info"] = spin_down_info
+
+    index = np.argsort(atoms.cart_coords[:, 2])
+    the_grid = GridSpec(1, num_atoms + 1)
+    plt.rcParams.update({"font.size": 18})
+    plt.figure(figsize=(8, 5))
+    plt.subplots_adjust(wspace=0.0)
+    count = 0
+    mx = 3
+    for i in range(num_atoms):
+        if i < num_atoms_include:
+            count += 1
+            plt.subplot(the_grid[0, count])
+            c = uniq_colors[unique_elements.index(elements[index[i]])]
+            tmp = np.abs(info["spin_up_info"][index[i]])
+            # plt.plot(tmp,info["energy"],c=c,alpha=0.8)
+            # plt.hist(tmp,bins=500)
+            plt.barh(info["energy"], tmp, color=c)
+            print(c, (elements[index[i]]))
+            plt.ylim([-4, 4])
+            mval = np.max(tmp) / mx
+            # plt.xlim([0,mval])
+            if i != 0:
+                plt.xticks([])
+                plt.yticks([])
+                plt.axis("off")
+    plt.savefig("atomdos.png")
+    plt.close()
+
+
 """
+import glob
 if __name__ == "__main__":
     for i in glob.glob("Int*/opt_*/opt*/LOCPOT"):
         offset(fname=i, left_index=2)
