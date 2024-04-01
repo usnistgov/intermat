@@ -35,7 +35,122 @@ The Interface materials design (InterMat) package ([https://arxiv.org/abs/2401.0
         cd inermat
         python setup.py develop
 
-## Functionalities
+## Gneration
+
+### Bulk structures from scratch
+An atomic structure can consist of atomic element types, corresponding
+xyz coordinates in space (either in real or reciprocal space) and
+lattice matrix used in setting periodic boundary conditions.
+
+An example of constructing an atomic structure class using
+`jarvis.core.Atoms` is given below. After creating the Atoms class, we
+can simply print it and visualize the POSCAR format file in a software
+such as VESTA. While the examples below use Silicon elemental crystal
+creation and analysis, it can be used for multi-component systems as
+well.
+
+``` python
+from jarvis.core.atoms import Atoms
+box = [[2.715, 2.715, 0], [0, 2.715, 2.715], [2.715, 0, 2.715]]
+coords = [[0, 0, 0], [0.25, 0.25, 0.25]]
+elements = ["Si", "Si"]
+Si = Atoms(lattice_mat=box, coords=coords, elements=elements, cartesian=False)
+print (Si) # To visualize 
+Si.write_poscar('POSCAR.vasp')
+Si.write_cif('POSCAR.vasp')
+```
+
+The <span class="title-ref">Atoms</span> class here is created from the
+raw data, but it can also be read from different file formats such as:
+<span class="title-ref">'.cif', 'POSCAR', '.xyz', '.pdb', '.sdf',
+'.mol2'</span> etc. The Atoms class can also be written to files in
+formats such as POSCAR/.cif etc.
+
+Note that for molecular systems, we use a large vaccum padding (say 50
+Angstrom in each direction) and set lattice_mat accordingly, e.g.
+lattice_mat = \[\[50,0,0\],\[0,50,0\],\[0,0,50\]\]. Similarly, for free
+surfaces we set high vaccum in one of the crystallographic directions
+(say z) by giving a large z-comonent in the lattice matrix while keeping
+the x, y comonents intact.
+
+``` python
+my_atoms = Atoms.from_poscar('POSCAR')
+my_atoms.write_poscar('MyPOSCAR')
+```
+
+Once this Atoms class is created, several imprtant information can be
+obtained such as:
+
+``` python
+print ('volume',Si.volume)
+print ('density in g/cm3', Si.density)
+print ('composition as dictionary', Si.composition)
+print ('Chemical formula', Si.composition.reduced_formula)
+print ('Spacegroup info', Si.spacegroup())
+print ('lattice-parameters', Si.lattice.abc, Si.lattice.angles)
+print ('packing fraction',Si.packing_fraction)
+print ('number of atoms',Si.num_atoms)
+print ('Center of mass', Si.get_center_of_mass())
+print ('Atomic number list', Si.atomic_numbers)
+```
+
+For creating/accessing dataset(s), we use `Atoms.from_dict()` and
+`Atoms.to_dict()` methods:
+
+``` python
+d = Si.to_dict()
+new_atoms = Atoms.from_dict(d)
+```
+
+The <span class="title-ref">jarvis.core.Atoms</span> object can be
+converted back and forth to other simulation toolsets such as Pymatgen
+and ASE if insyalled, as follows
+
+``` python
+pmg_struct = Si.pymatgen_converter()
+ase_atoms = Si.ase_converter()
+```
+
+In order to make supercell, the following example can be used:
+
+``` python
+supercell_1 = Si.make_supercell([2,2,2])
+supercell_2 = Si.make_supercell_matrix([[2,0,0],[0,2,0],[0,0,2]])
+supercell_1.density == supercell_2.density
+```
+
+### Bulk structures from existing database
+
+There are more than [50 databases available in the JARVIS-Tools](https://pages.nist.gov/jarvis/databases/). These can be used to easily obtain a structure, e.g. for Silicon (JVASP-1002):
+
+``` python
+from jarvis.tasks.lammps.lammps import LammpsJob, JobFactory
+from jarvis.core.atoms import Atoms
+from jarvis.db.figshare import get_jid_data
+from jarvis.analysis.structure.spacegroup import Spacegroup3D
+
+
+# atoms = Atoms.from_poscar('POSCAR')
+# Get Silicon diamond structure from JARVIS-DFT database
+dataset = "dft_3d"
+jid = "JVASP-1002"
+tmp_dict = get_jid_data(jid=jid, dataset=dataset)["atoms"]
+atoms = Atoms.from_dict(tmp_dict)
+```
+
+The JARVIS-OPTIMADE and similar OPTIMADE tools can also be used to obtain structures.e.g.
+
+``` python
+from jarvis.db.restapi import jarvisdft_optimade
+response_data = jarvisdft_optimade(query = "elements HAS  ALL C,Si")
+response_data = jarvisdft_optimade(query = "id=1002")
+```
+
+
+
+### Surface/slab structures
+
+### Interface structures
 
 ### Getting bulk structures -starting structures
 
