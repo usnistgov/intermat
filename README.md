@@ -35,7 +35,7 @@ The Interface materials design (InterMat) package ([https://arxiv.org/abs/2401.0
         cd inermat
         python setup.py develop
 
-## Gneration
+## Generation
 
 ### Bulk structures from scratch
 An atomic structure can consist of atomic element types, corresponding
@@ -150,40 +150,56 @@ response_data = jarvisdft_optimade(query = "id=1002")
 
 ### Surface/slab structures
 
-### Interface structures
+An example of creating, free surfaces is shown below:
 
-### Getting bulk structures -starting structures
+``` python
+from jarvis.analysis.defects.surface import wulff_normals, Surface
 
-We can get bulk structures of a system for JARVIS-DFT or other databases as listed [here](https://pages.nist.gov/jarvis/databases/)
+# Let's create (1,1,1) surface with three layers, and vacuum=18.0 Angstrom
+# We center it around origin so that it looks good during visualization
+surface_111 = (
+    Surface(atoms=Si, indices=[1, 1, 1], layers=3, vacuum=18)
+        .make_surface()
+        .center_around_origin()
+)
+print(surface_111)
+```
 
-Example for Silicon from the [JARVIS-DFT](https://jarvis.nist.gov/jarvisdft/)
+While the above example makes only one surface (111), we can ask
+jarvis-tools to provide all symmetrically distinct surfaces as follows:
 
-   ```
-   from jarvis.db.fighshare import get_jid_data
-   from jarvis.core.atoms import Atoms
-   jid = 'JVASP-1002'
-   atoms_si = Atoms.from_dict(get_jid_data(jid=jid,dataset='dft_3d')['atmoms'])
-   print(atoms_si)
-   ```
-### Surfaces
+``` python
+from jarvis.analysis.structure.spacegroup import (
+    Spacegroup3D,
+    symmetrically_distinct_miller_indices,
+)
+spg = Spacegroup3D(atoms=Si)
+cvn = spg.conventional_standard_structure
+mills = symmetrically_distinct_miller_indices(max_index=3, cvn_atoms=cvn)
+for i in mills:
+    surf = Surface(atoms=Si, indices=i, layers=3, vacuum=18).make_surface()
+    print ('Index:', i)
+    print (surf)
+```
+
+We can streamline surface generation for numerous structures. e.g.,
 
 Example of generating non-polar surfaces of semiconductors
 
-```
-from intermat.known_mats import semicons
+``` python
 from jarvis.analysis.defects.surface import Surface
 from jarvis.analysis.structure.spacegroup import (
     Spacegroup3D,
     symmetrically_distinct_miller_indices,
 )
 import time
-semicons = semicons() # e.g. 1002 for silicon
+dataset = 'dft_3d'
+semicons = ['1002', '1174', '30'] 
 for i in semicons:
     jid='JVASP-'+str(i)
-    atoms=get_jid_atoms(jid=jid)
+    atoms=get_jid_atoms(jid=jid, dataset=dataset)
     if atoms is not None:
         atoms=Atoms.from_dict(atoms)
-
         spg = Spacegroup3D(atoms=atoms)
         cvn = spg.conventional_standard_structure
         mills = symmetrically_distinct_miller_indices(
@@ -197,8 +213,9 @@ for i in semicons:
                 thickness=16,
                 vacuum=12,
             ).make_surface()
-            # Surface-JVASP-105933_miller_1_1_0
             nm='Surface-'+jid+'_miller_'+'_'.join(map(str,miller))
+            print(surf)
+            print()
             if not surf.check_polar and '-1' not in nm:
                 non_polar_semi.append(nm)
                 if len(non_polar_semi)%100==0:
@@ -208,11 +225,34 @@ for i in semicons:
 
 ```
 
-### Generating interface structures and calculations
-Zur algorithm based interface (& terminations) ASJ vs STJ, etc. models
+### Interface structures
 
+We generate the interfaces following the Zur et. al. algorithm. The Zur algorithm generates a number of superlattice transformations within a specified maximum surface area and also evaluates the length and angle between film and substrate superlattice vectors to determine if they can match within a tolerance. This algorithm is applicable to different crystal structures and their surface orientations. 
 
+For generating interface/heterostructures (combination of film and substrate), we can use the `run_intermat.py` command. It requies a config file for generation settings such as, `film_file_path` e.g., `POSCAR-1`, `substrate_file_path` e.g., `POSCAR-2`, or `film_jid` (e.g. [JVASP-1002](https://www.ctcms.nist.gov/~knc6/static/JARVIS-DFT/JVASP-1002.xml) for Si)/`substrate_jid` (e.g. [JVASP-1174](https://www.ctcms.nist.gov/~knc6/static/JARVIS-DFT/JVASP-1174.xml) for GaAs) if you want use JARVIS-DFT structure instead, `film_index` for film's Miller index such as `0_0_1`, `substrate_index` for substrate's Miller index such as `0_0_1`, `film_thickness`, `substrate_thickness`, maximum allowed area in Angstrom^2 (`max_area`), maximum mismath in latice lengths (`ltol`), separation between the slabs (`seperation`), whether to generate interface which are peridoic (low `vacuum_interface`) or aperidoic (high `vacuum_interface`)  etc. 
+
+InterMat default settings are available [here](https://github.com/usnistgov/intermat/blob/intermat/intermat/config.py#L136).
+
+Thus far, we have determined a candidate unit cell, but the relative alignment of the structures in the in-plane, as well as the terminations still need to be decided. We can perform a grid search of possible in-plane alignments with a space of 0.05 (`disp_intvl`) fractional coordinates to determine the initial structure for further relaxation. Doing such a large number of calculation with DFT would be prohibitive, so we use faster checks using ALIGNN-FF/ Ewald summation/ classical FFs etc. A typical value of non-dimensional `disp_intvl` could be 0.1. The method is set using `calculator_method` tag. 
+
+An example [JSON](https://www.w3schools.com/js/js_json_intro.asp) `config.json` file is available [here](https://github.com/usnistgov/intermat/blob/intermat/intermat/tests/config.json). We start with a config.json file:
+
+``` python
+
+{ film_jid:"JVASP-1002", substrate_jid:"JVASP-1174"}
 ```
+keeping all the default parametrs intact:
+
+``` python
+run_intermat.py --config_file "config.json"
+```
+
+The `run_intermat.py` is a helper script and is based on a broader [`InterfaceCombi`](https://github.com/usnistgov/intermat/blob/main/intermat/generate.py#L99) class.
+
+Similar to the surface generation workflow, a similar one for interfaces high-throughput workflows can be as follows:
+
+
+``` python
 from jarvis.core.atoms import Atoms
 from intermat.generate import InterfaceCombi
 from intermat.calculators import template_extra_params
@@ -221,7 +261,8 @@ import itertools
 from intermat.offset import offset, locpot_mean
 
 # Step-1: prepare and submit calculations
-combinations = [["JVASP-1002", "JVASP-1174", [1, 1, 0], [1, 1, 0]]]
+# Si/GaAs, Si/GaP example
+combinations = [["JVASP-1002", "JVASP-1174", [1, 1, 0], [1, 1, 0]], ["JVASP-1002", "JVASP-1327", [1, 1, 0], [1, 1, 0]]]
 for i in combinations:
     tol = 1
     seperations = [2.5]  # can have multiple separations
@@ -279,6 +320,10 @@ dif, cbm, vbm, avg_max, efermi, formula, atoms, fin_en = locpot_mean(
     "PATH_TO_LOCPOT"
 )
 ```
+
+
+## Calculation
+
 ### Rapid structure screening / relaxation
 ALIGNN-FF, Ewald, Tight-binding etc.
 
