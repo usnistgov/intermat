@@ -322,25 +322,8 @@ dif, cbm, vbm, avg_max, efermi, formula, atoms, fin_en = locpot_mean(
 ```
 
 
-## Calculation
+## Calculators
 
-### Rapid structure screening / relaxation
-ALIGNN-FF, Ewald, Tight-binding etc.
+There are more than 10 multi-scale methods available with InterMat. Most of them are open-access such as [QE](https://www.quantum-espresso.org/), [GPAW](https://wiki.fysik.dtu.dk/gpaw/), [LAMMPS](https://www.lammps.org/#gsc.tab=0), [ALIGNN-FF](https://github.com/usnistgov/alignn?tab=readme-ov-file#alignnff), [ASE](https://wiki.fysik.dtu.dk/ase/index.html), [EMT](https://wiki.fysik.dtu.dk/ase/ase/calculators/emt.html) but some could be proprietary such as [VASP](https://www.vasp.at/).
 
-### Computational Engines
-VASP, QE, GPAW, LAMMPS, ASE,...
-
-Details [here](https://github.com/usnistgov/intermat/blob/main/intermat/calculators.py#L199)
-
-### Properties using post-processing (band alignment/offset)
-IU vs ASJ/STJ
-Band alignment, band gap, work function, ionization potential, electron affinity, adhesion energy, surface energy
-
-### AI/ML
-Property prediction
-
-## Curated dataset
-Experimental validation
-
-# More detailed documentation coming soon!
 
