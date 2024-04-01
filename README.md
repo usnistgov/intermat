@@ -3,7 +3,21 @@
 [![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/7492b51b371a8e9dbaa01d76bb438467)  -->
 ![InterMat Schematic](https://github.com/usnistgov/intermat/blob/intermat/intermat/Schematic.png)
 
+# Table of Contents
+* [Introduction](#intro)
+* [Installation](#install)
+* [Generation](#generation)
+  * [Bulk structures](#bulk)
+* [Calculators and analyzers](#calc)
+* [Benchmarking](#benchmarking)
+* [AI/ML](#aiml)
+* [Webapp](#webapp)
+* [References](#refs)
+* [How to contribute](#contrib)
+* [Correspondence](#corres)
+* [Funding support](#fund)
 
+<a name="intro"></a>
 ## Introduction
 
 Interfaces are critical for a variety of technological applications including semiconductor transistors and diodes, solid-state lighting devices, solar-cells, data-storage and battery applications. While interfaces are ubiquitous, predicting even basic interface properties from bulk data or chemical models remains challenging. Furthermore, the continued scaling of devices towards the atomic limit makes interface properties even more important. There have been numerous scientific efforts to model interfaces with a variety of techniques including density functional theory (DFT), force-field (FF), tight-binding, TCAD and machine learning (ML) techniques. However, to the best of our knowledge, there is no systematic investigation of interfaces for a large class of structural variety and chemical compositions. Most of the previous efforts focus on a limited number of interfaces, and hence there is a need for a dedicated infrastructure for data-driven interface materials design.
@@ -17,7 +31,7 @@ The Interface materials design (InterMat) package ([https://arxiv.org/abs/2401.0
 
 
 
-
+<a name="install"></a>
 ## Installation
 
 -   We recommend installing miniconda environment from
@@ -35,8 +49,10 @@ The Interface materials design (InterMat) package ([https://arxiv.org/abs/2401.0
         cd inermat
         python setup.py develop
 
+<a name="generation"></a>
 ## Generation
 
+<a name="bulk"></a>
 ### Bulk structures from scratch
 An atomic structure can consist of atomic element types, corresponding
 xyz coordinates in space (either in real or reciprocal space) and
@@ -249,8 +265,120 @@ run_intermat.py --config_file "config.json"
 
 The `run_intermat.py` is a helper script and is based on a broader [`InterfaceCombi`](https://github.com/usnistgov/intermat/blob/main/intermat/generate.py#L99) class.
 
-Similar to the surface generation workflow, a similar one for interfaces high-throughput workflows can be as follows:
 
+An example of application of alignn_ff for xy scan is shown below.
+
+
+<a name="calc"></a>
+## Calculators and analyzers
+
+There are more than 10 multi-scale methods available with InterMat. Most of them are open-access such as [QE](https://www.quantum-espresso.org/), [GPAW](https://wiki.fysik.dtu.dk/gpaw/), [LAMMPS](https://www.lammps.org/#gsc.tab=0), [ALIGNN-FF](https://github.com/usnistgov/alignn?tab=readme-ov-file#alignnff), [ASE](https://wiki.fysik.dtu.dk/ase/index.html), [EMT](https://wiki.fysik.dtu.dk/ase/ase/calculators/emt.html) but some could be proprietary such as [VASP](https://www.vasp.at/).
+
+On of the most common quantities to calculate for bulk materials, surfaces and interfaces is energy. All the methods mentioned above allow calculation of energies and have their strength and limitations.
+
+An example to calulate energy of FCC aluminum with default (tutorial purposes) settings with QE is as follows:
+
+Here we define an atomic structure of Aluminum and then use [`Calc`](https://github.com/usnistgov/intermat/blob/intermat/intermat/calculators.py#L170) class which can be used for several methods.
+In the method we can switch to `alignn_ff`, 'eam_ase`, `lammps`, `vasp`, 'tb3`, `emt`, `gpaw` etc. Respecive setting parameters are defined in `IntermatConfig` as mentioned above.
+
+``` python
+from intermat.config import IntermatConfig
+from jarvis.io.vasp.inputs import Poscar
+from intermat.calculators import Calc
+Al = """Al
+1.0
+2.4907700981617955 -1.4394159e-09 1.4380466239515413
+0.8302566980301707 2.348320626706396 1.438046623951541
+-4.0712845e-09 -2.878833e-09 2.8760942620064256
+Al
+1
+Cartesian
+0.0 0.0 0.0
+"""
+params = IntermatConfig().dict()
+atoms = Poscar.from_string(Al).atoms
+pprint.pprint(params)
+
+method = "qe"
+calc = Calc(
+    method=method,
+    atoms=atoms,
+    extra_params=params,
+    jobname="FCC_Aluminum_JVASP-816",
+)
+en = calc.predict()["total_energy"]
+print(en)
+```
+
+In the config file, the default value of `sub_job` is `False` which runs calculations on the head node, turning it to `True`, submis the job in the HPC queue with respective settings such as queue name, walltime etc. One of the important quantities for surfaces is surface energy ($\gamma$). The calculation of surface energy using atomistic simulations typically involves the following steps:
+
+1. **Model Construction**: Build a slab model of the material with a surface of interest. The slab should be thick enough to ensure that the atoms in the middle of the slab have bulk-like properties.
+
+2. **Energy Minimization**: Perform energy minimization or geometry optimization to relax the atomic positions in the slab. This step is important to remove any artificial stresses or strains that might be present due to the initial construction of the slab.
+
+3. **Total Energy Calculation**: Calculate the total energy of the relaxed slab model.
+
+4. **Surface Energy Calculation**: The surface energy ($\gamma$)  can be calculated using the formula:
+
+
+```math
+    \gamma = \frac{E_{\text{slab}} - N_{\text{bulk}} \cdot E_{\text{bulk}}}{2A} 
+```
+   where:
+   - $\(E_{\text{slab}}\)$ is the total energy of the relaxed slab model.
+   - $\(N_{\text{bulk}}\)$ is the number of bulk-like atoms in the slab model.
+   - $\(E_{\text{bulk}}\)$ is the energy per atom in the bulk material, which can be obtained from a separate calculation of a bulk model.
+   - $\(A\)$ is the surface area of the slab model.
+   - The factor of 2 accounts for the fact that there are two surfaces in the slab model (top and bottom).
+
+It's important to ensure that the slab model is sufficiently large in the surface plane to minimize the interaction between periodic images and sufficiently thick to separate the two surfaces. Additionally, the choice of boundary conditions, potential energy function (force field for classical simulations or exchange-correlation functional for quantum simulations), and convergence criteria can significantly affect the accuracy of the surface energy calculation.
+
+
+In addition to energetics based quantities such as surface energies , electronic properties of surfaces such as ionization potentials, electron affinities, and independent unit (IU)-based band offsets can be calculated from the electronic structure calculations. It requires electrostatic local potential (such as `LOCPOT`) file. An example for VASP can be given as follows:
+
+``` python
+from intermat.offset import offset, locpot_mean
+phi, cbm, vbm, avg_max, efermi, formula, atoms, fin_en = locpot_mean("LOCPOT")
+```
+
+We can obtain the DFT VBM and vacuum level (from the maximum value of average electrostatic potential, here `phi`) of surface slabs using DFT. Subtracting the vacuum level from the VBM provides ionization potential (IP) information. Then, we add the bandgap ($E_g$) of the material to the ionization potential to get the electron affinity (EA, $\chi$).
+
+IU band alignment, also known as Anderson's rule, predicts semicondcutor band offsets at interfaces using only the IP and EA data from independent surface calculations. For a semiconductor heterojunction between A and B, the conduction band offset can be given by: 
+
+```math
+  \Delta E_c = \chi_B -  \chi_A
+```
+
+Similarly, the valence band offset is given by:
+
+```math
+  \Delta E_v = (\chi_A+ E_{gA}) -  (\chi_B+ E_{gB})
+```
+
+
+ 
+Similarly, for inerface band offset calculations, its important to have local potentials of each constituent slabs/bulk materials (depending on STJ/ASJ models) as well as the interface.
+
+After determining the optimized geometric structure for the interface using DFT, we can obtain band offset data. As an example, we show a detailed analysis of Si(110)/GaAs(110) and AlN(001)/GaN(001) in Fig. \ref{fig:band_alignn}. In Fig. \ref{fig:band_alignn}a, we show the atomic structure of the ASJ based heterostructure of Si(110)/GaAs(110). The left side (with blue atoms) represents the Si and the right side is the GaAs region. In Fig. \ref{fig:band_alignn}c, we show the electrostatic potential profile, averaged in-plane, of the interface. The approximately sinusoidal profile on both regions represents the presence of atomic layers. The cyan lines show the region used to define the repeat distance, $L$, used for averaging in each material (see below). The red and green lines show the average potential profiles for the left and right parts using the repeat distance. The valence band offset ($\Delta E_v$) of an interface between semiconductor A and B, $\Delta E_v$ is obtained using eq. 4. The difference in the averages for the left and right parts gives the $\Delta V$ term. Now the bulk VBMs of the left and right parts are also calculated to determine the $\Delta E$. The sum of these two quantities gives the band offset that can be compared to experiments. 
+
+```math
+ \Delta E_v (A/B)= (E_v^B-E_v^A) + \Delta V
+```
+
+```math
+  \Delta V = \bar{\bar{V}}_A - \bar{\bar{V}}_B
+```
+
+
+
+``` python
+from intermat.analyze import offset
+fname = "Interface-JVASP-1002_JVASP-1174_film_miller_1_1_0_sub_miller_1_1_0_film_thickness_16_subs_thickness_16_seperation_2.5_disp_0.5_0.2_vasp/*/*/LOCPOT"
+ofs = offset(fname=fname, left_index=-1, polar=False)
+```
+
+
+An example, for high-throughput workflow with surfaces could be as follows:
 
 ``` python
 from jarvis.core.atoms import Atoms
@@ -301,29 +429,901 @@ for i in combinations:
         do_surfaces=False,
         extra_params=info,
     )
-    # Other calculators such as QE, TB3, ALIGNN etc.
-    # are also available
 
-    # Once calculations are converged
-    # We can calculate properties such as
-    # bandgap, band offset, interfac energy for interfaces
-    # &  electron affinity, surface energy,
-    # ionization potential etc. for surfaces
-    #
-    # Path to LOCPOT file
-fname = "Interface-JVASP-1002_JVASP-1174_film_miller_1_1_0_sub_miller_1_1_0_film_thickness_16_subs_thickness_16_seperation_2.5_disp_0.5_0.2_vasp/*/*/LOCPOT"
-ofs = offset(fname=fname, left_index=-1, polar=False)
-print(ofs)
-    # Note for interfaces we require LOCPOTs for bulk materials of the two materials as well
-    # For surface properties
-dif, cbm, vbm, avg_max, efermi, formula, atoms, fin_en = locpot_mean(
-    "PATH_TO_LOCPOT"
 )
 ```
 
-
-## Calculators
-
-There are more than 10 multi-scale methods available with InterMat. Most of them are open-access such as [QE](https://www.quantum-espresso.org/), [GPAW](https://wiki.fysik.dtu.dk/gpaw/), [LAMMPS](https://www.lammps.org/#gsc.tab=0), [ALIGNN-FF](https://github.com/usnistgov/alignn?tab=readme-ov-file#alignnff), [ASE](https://wiki.fysik.dtu.dk/ase/index.html), [EMT](https://wiki.fysik.dtu.dk/ase/ase/calculators/emt.html) but some could be proprietary such as [VASP](https://www.vasp.at/).
+In the above example, we calculate, work of adhesion (`wad`) as well as band offset.
+Calculations of band offsets and band-alignment at semiconductor heterojunctions are of special interest for device design. Semiconductor device transport and performance depend critically on valence band offsets and conduction band offsets  as well as interfacial roughness and defects.
 
 
+<a name="benchmarking"></a>
+## Benchmarking
+
+<table>
+    <tr>
+        <td>System</td>
+        <td>IDs</td>
+        <td>Miller</td>
+        <td>$\phi$ (OPT)</td>
+        <td>$\phi$ (Exp)</td>
+        <td>$\chi (OPT)$</td>
+        <td>$\chi $(Exp)</td>
+        <td>$\gamma$ (OPT)</td>
+        <td>$\gamma$ (Exp)</td>
+    </tr>
+    <tr>
+        <td>%</td>
+        <td></td>
+        <td>Semiconductor-Semiconductor</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Si</td>
+        <td>1002</td>
+        <td>111</td>
+        <td>5.00</td>
+        <td>4.77\cite{dillon1958work}</td>
+        <td>4.10</td>
+        <td>4.05\cite{bhattacharya1997semiconductor}</td>
+        <td>1.60</td>
+        <td>1.14\cite{messmer1981surface}</td>
+    </tr>
+    <tr>
+        <td>Si</td>
+        <td>1002</td>
+        <td>110</td>
+        <td>5.30</td>
+        <td>4.89\cite{dillon1958work}</td>
+        <td>4.10</td>
+        <td>-</td>
+        <td>1.66</td>
+        <td>1.9\cite{messmer1981surface}</td>
+    </tr>
+    <tr>
+        <td>Si</td>
+        <td>1002</td>
+        <td>001</td>
+        <td>5.64</td>
+        <td>4.92\cite{dillon1958work}</td>
+        <td>3.60</td>
+        <td>-</td>
+        <td>2.22</td>
+        <td>2.13\cite{jaccodine1963surface}</td>
+    </tr>
+    <tr>
+        <td>C</td>
+        <td>91</td>
+        <td>111</td>
+        <td>4.67</td>
+        <td>5.0\cite{holzl2006work}</td>
+        <td>-2.9</td>
+        <td>-</td>
+        <td>5.27</td>
+        <td>5.50\cite{field1981strength}</td>
+    </tr>
+    <tr>
+        <td>Ge</td>
+        <td>890</td>
+        <td>111</td>
+        <td>4.87</td>
+        <td>4.80\cite{gobeli1964photoelectric}</td>
+        <td>5.2</td>
+        <td>4.13\cite{milnes2012heterojunctions}</td>
+        <td>0.99</td>
+        <td>1.30\cite{jaccodine1963surface}</td>
+    </tr>
+    <tr>
+        <td>SiGe</td>
+        <td>105410</td>
+        <td>111</td>
+        <td>4.93</td>
+        <td>4.08\cite{pouch2015work}</td>
+        <td>4.5</td>
+        <td>-</td>
+        <td>1.36</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>SiC</td>
+        <td>8118</td>
+        <td>001</td>
+        <td>5.26</td>
+        <td>4.85\cite{pelletier1984application}</td>
+        <td>1.3</td>
+        <td>-</td>
+        <td>3.51</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>GaAs</td>
+        <td>1174</td>
+        <td>110</td>
+        <td>4.89</td>
+        <td>4.71\cite{liu2007first}</td>
+        <td>4.40</td>
+        <td>4.07\cite{bhattacharya1997semiconductor}</td>
+        <td>0.67</td>
+        <td>0.86\cite{messmer1981surface}</td>
+    </tr>
+    <tr>
+        <td>InAs</td>
+        <td>1186</td>
+        <td>110</td>
+        <td>4.85</td>
+        <td>4.90\cite{liu2007first}</td>
+        <td>4.9</td>
+        <td>4.9\cite{milnes2012heterojunctions}</td>
+        <td>0.57</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>AlSb</td>
+        <td>1408</td>
+        <td>110</td>
+        <td>5.11</td>
+        <td>4.86\cite{liu2007first}</td>
+        <td>3.70</td>
+        <td>3.65\cite{milnes2012heterojunctions}</td>
+        <td>0.77</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>GaSb</td>
+        <td>1177</td>
+        <td>110</td>
+        <td>4.48</td>
+        <td>4.76\cite{liu2007first}</td>
+        <td>3.70</td>
+        <td>4.06\cite{milnes2012heterojunctions}</td>
+        <td>0.71</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>AlN</td>
+        <td>39</td>
+        <td>100</td>
+        <td>5.56</td>
+        <td>5.35\cite{pelletier1984application}</td>
+        <td>1.3</td>
+        <td>2.1 \cite{wu1998electron}</td>
+        <td>2.27</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>GaN</td>
+        <td>30</td>
+        <td>100</td>
+        <td>5.74</td>
+        <td>5.90\cite{rosa2006first}</td>
+        <td>2.8</td>
+        <td>3.3\cite{lin2012experimental}</td>
+        <td>1.67</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>BN</td>
+        <td>79204</td>
+        <td>110</td>
+        <td>6.84</td>
+        <td>7.0\cite{lu2022towards}</td>
+        <td>1.4</td>
+        <td>-</td>
+        <td>2.41</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>GaP</td>
+        <td>1393</td>
+        <td>110</td>
+        <td>5.31</td>
+        <td>6.0\cite{pelletier1984application}</td>
+        <td>4.0</td>
+        <td>4.3\cite{bhattacharya1997semiconductor}</td>
+        <td>0.88</td>
+        <td>1.9\cite{messmer1981surface}</td>
+    </tr>
+    <tr>
+        <td>BP</td>
+        <td>1312</td>
+        <td>110</td>
+        <td>5.61</td>
+        <td>5.05\cite{crovetto2022boron}</td>
+        <td>2.8</td>
+        <td>-</td>
+        <td>2.08</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>InP</td>
+        <td>1183</td>
+        <td>110</td>
+        <td>5.17</td>
+        <td>4.65\cite{liu2007first}</td>
+        <td>4.10</td>
+        <td>4.35\cite{bhattacharya1997semiconductor}</td>
+        <td>0.73</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>CdSe</td>
+        <td>1192</td>
+        <td>110</td>
+        <td>5.70</td>
+        <td>5.35\cite{csik2005density}</td>
+        <td>6.4</td>
+        <td>-</td>
+        <td>0.38</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>% ZnSe</td>
+        <td>96</td>
+        <td>110</td>
+        <td>5.67</td>
+        <td>6.00\cite{haase1990characterization}</td>
+        <td>5.40</td>
+        <td>4.09\cite{milnes2012heterojunctions}</td>
+    </tr>
+    <tr>
+        <td>ZnSe</td>
+        <td>96</td>
+        <td>110</td>
+        <td>5.67</td>
+        <td>6.00\cite{haase1990characterization}</td>
+        <td>5.4</td>
+        <td>-</td>
+        <td>0.44</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>ZnTe</td>
+        <td>1198</td>
+        <td>110</td>
+        <td>5.17</td>
+        <td>5.30\cite{shen2020insights}</td>
+        <td>4.10</td>
+        <td>3.5\cite{milnes2012heterojunctions}</td>
+        <td>0.36</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Al</td>
+        <td>816</td>
+        <td>111</td>
+        <td>4.36</td>
+        <td>4.26\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.82</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Au</td>
+        <td>825</td>
+        <td>111</td>
+        <td>5.5</td>
+        <td>5.31\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.90</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Ni</td>
+        <td>943</td>
+        <td>111</td>
+        <td>5.35</td>
+        <td>5.34\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>2.02</td>
+        <td>2.34\cite{clark1980effect}</td>
+    </tr>
+    <tr>
+        <td>Ag</td>
+        <td>813</td>
+        <td>001</td>
+        <td>4.5</td>
+        <td>4.2\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.99</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Cu</td>
+        <td>867</td>
+        <td>001</td>
+        <td>4.7</td>
+        <td>5.1\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>1.47</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Pd</td>
+        <td>963</td>
+        <td>111</td>
+        <td>5.54</td>
+        <td>5.6\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>1.57</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Pt</td>
+        <td>972</td>
+        <td>001</td>
+        <td>5.97</td>
+        <td>5.93\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>1.94</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Ti</td>
+        <td>1029</td>
+        <td>100</td>
+        <td>3.84</td>
+        <td>4.33\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>2.27</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Mg</td>
+        <td>919</td>
+        <td>100</td>
+        <td>3.76</td>
+        <td>3.66\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.35</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Na</td>
+        <td>931</td>
+        <td>001</td>
+        <td>2.97</td>
+        <td>2.36\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.10</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Hf</td>
+        <td>802</td>
+        <td>111</td>
+        <td>3.7</td>
+        <td>3.9\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>2.02</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Co</td>
+        <td>858</td>
+        <td>001</td>
+        <td>5.22</td>
+        <td>5.0\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>3.49</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Rh</td>
+        <td>984</td>
+        <td>001</td>
+        <td>5.4</td>
+        <td>4.98\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>2.46</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Ir</td>
+        <td>901</td>
+        <td>100</td>
+        <td>5.85</td>
+        <td>5.67\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>2.77</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Nb</td>
+        <td>934</td>
+        <td>100</td>
+        <td>3.87</td>
+        <td>4.02\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>2.41</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Re</td>
+        <td>981</td>
+        <td>100</td>
+        <td>4.96</td>
+        <td>4.72\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>2.87</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Mo</td>
+        <td>21195</td>
+        <td>100</td>
+        <td>4.17</td>
+        <td>4.53\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>3.30</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Zn</td>
+        <td>1056</td>
+        <td>001</td>
+        <td>4.27</td>
+        <td>4.24\cite{ashcroft2022solid}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.36</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Bi</td>
+        <td>837</td>
+        <td>001</td>
+        <td>4.31</td>
+        <td>4.34\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.65</td>
+        <td>0.43\cite{tran2016surface}</td>
+    </tr>
+    <tr>
+        <td>Cr</td>
+        <td>861</td>
+        <td>110</td>
+        <td>5.04</td>
+        <td>4.5\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>3.31</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Sb</td>
+        <td>993</td>
+        <td>001</td>
+        <td>4.64</td>
+        <td>4.7\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.67</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>Sn</td>
+        <td>1008</td>
+        <td>110</td>
+        <td>4.82</td>
+        <td>4.42\cite{holzl2006work}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.91</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>MAE</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.29</td>
+        <td>-</td>
+        <td>0.39</td>
+        <td>-</td>
+        <td>0.34</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>%GaP</td>
+        <td>8184</td>
+        <td>110</td>
+        <td>5.46</td>
+        <td>6.0\cite{pelletier1984application}</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>%%AlAs</td>
+        <td>1372</td>
+        <td>110</td>
+        <td>5.32</td>
+        <td>2.62\cite{liu2007first}</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>%%GaSb</td>
+        <td>1177</td>
+        <td>110</td>
+        <td>5.12</td>
+        <td>4.76\cite{liu2007first}</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>% InAs</td>
+        <td>1186</td>
+        <td>110</td>
+        <td>x</td>
+        <td>4.90\cite{liu2007first}</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>% InSb</td>
+        <td>1189</td>
+        <td>110</td>
+        <td>x</td>
+        <td>4.77\cite{liu2007first}</td>
+        <td></td>
+    </tr>
+</table>
+
+
+
+<table>
+    <tr>
+        <td>System</td>
+        <td>ID</td>
+        <td>Miller</td>
+        <td>IU (OPT)</td>
+        <td>ASJ (OPT)</td>
+        <td>ASJ (R2SCAN)</td>
+        <td>Exp</td>
+    </tr>
+    <tr>
+        <td>AlP/Si</td>
+        <td>1327/1002</td>
+        <td>110/110</td>
+        <td>1.24</td>
+        <td>0.88</td>
+        <td>1.04</td>
+        <td>1.35 \cite{di2021band}</td>
+    </tr>
+    <tr>
+        <td>GaAs/Si</td>
+        <td>1174/1002</td>
+        <td>110/110</td>
+        <td>0.30</td>
+        <td>0.31</td>
+        <td>0.39</td>
+        <td>0.23 \cite{list1987si}</td>
+    </tr>
+    <tr>
+        <td>CdS/Si</td>
+        <td>8003/1002</td>
+        <td>110/110</td>
+        <td>3.22</td>
+        <td>1.48</td>
+        <td>1.70</td>
+        <td>1.6 \cite{kundu1993chemical}</td>
+    </tr>
+    <tr>
+        <td>%ZnSe/Si</td>
+        <td>96/1002</td>
+        <td>110/110</td>
+        <td></td>
+        <td></td>
+        <td>1.18</td>
+        <td>1.25 \cite{schubert2022physical}</td>
+    </tr>
+    <tr>
+        <td>AlAs/GaAs</td>
+        <td>1372/1174</td>
+        <td>110/110</td>
+        <td>0.60</td>
+        <td>0.48</td>
+        <td>0.50</td>
+        <td>0.55 \cite{batey1986energy}</td>
+    </tr>
+    <tr>
+        <td>CdS/CdSe</td>
+        <td>8003/1192</td>
+        <td>110/110</td>
+        <td>0.35</td>
+        <td>0.10</td>
+        <td>0.11</td>
+        <td>0.55 \cite{talapin2003highly}</td>
+    </tr>
+    <tr>
+        <td>InP/GaAs</td>
+        <td>1183/1174</td>
+        <td>110/110</td>
+        <td>0.25</td>
+        <td>0.72</td>
+        <td>0.75</td>
+        <td>0.19\cite{waldrop1989measurement}</td>
+    </tr>
+    <tr>
+        <td>ZnTe/AlSb</td>
+        <td>1198/1408</td>
+        <td>110/110</td>
+        <td>0.8</td>
+        <td>0.25</td>
+        <td>0.33</td>
+        <td>0.35 \cite{schwartz1990band}</td>
+    </tr>
+    <tr>
+        <td>CdSe/ZnTe</td>
+        <td>1192/1198</td>
+        <td>110/110</td>
+        <td>1.8</td>
+        <td>0.58</td>
+        <td>0.67</td>
+        <td>0.64\cite{yu1991measurement}</td>
+    </tr>
+    <tr>
+        <td>InAs/AlAs</td>
+        <td>1186/1372</td>
+        <td>110/110</td>
+        <td>-</td>
+        <td>0.46</td>
+        <td>0.39</td>
+        <td>0.5 \cite{arriaga1991electronic}</td>
+    </tr>
+    <tr>
+        <td>InAs/AlSb</td>
+        <td>1186/1408</td>
+        <td>110/110</td>
+        <td>-</td>
+        <td>0.05</td>
+        <td>0.16</td>
+        <td>0.09 \cite{nakagawa1989electrical}</td>
+    </tr>
+    <tr>
+        <td>ZnSe/InP</td>
+        <td>96/1183</td>
+        <td>110/110</td>
+        <td>-</td>
+        <td>0.13</td>
+        <td>0.18</td>
+        <td>0.41 \cite{lange2020spectroscopic}</td>
+    </tr>
+    <tr>
+        <td>InAs/InP</td>
+        <td>1186/1183</td>
+        <td>110/110</td>
+        <td>-</td>
+        <td>0.11</td>
+        <td>0.09</td>
+        <td>0.31\cite{waldrop1989measurement}</td>
+    </tr>
+    <tr>
+        <td>ZnSe/AlAs</td>
+        <td>96/1372</td>
+        <td>110/110</td>
+        <td>-</td>
+        <td>0.38</td>
+        <td>0.45</td>
+        <td>0.4 \cite{rubini1998transitivity}</td>
+    </tr>
+    <tr>
+        <td>GaAs/ZnSe</td>
+        <td>1174/96</td>
+        <td>110/110</td>
+        <td>-</td>
+        <td>0.72</td>
+        <td>0.80</td>
+        <td>0.98 \cite{kowalczyk1982measurement}</td>
+    </tr>
+    <tr>
+        <td>ZnS/Si</td>
+        <td>10591/1002</td>
+        <td>001/001</td>
+        <td>-</td>
+        <td>0.92</td>
+        <td>1.16</td>
+        <td>1.52 \cite{lew1997electronic}</td>
+    </tr>
+    <tr>
+        <td>Si/SiC</td>
+        <td>1002/8118</td>
+        <td>001/001</td>
+        <td>-</td>
+        <td>0.51</td>
+        <td>0.47</td>
+        <td>0.5 \cite{dufour1997sic}</td>
+    </tr>
+    <tr>
+        <td>GaN/SiC (P)</td>
+        <td>30/8118</td>
+        <td>001/001</td>
+        <td>-</td>
+        <td>1.12</td>
+        <td>1.37</td>
+        <td>0.70 \cite{rizzi1999aln}</td>
+    </tr>
+    <tr>
+        <td>Si/AlN (P)</td>
+        <td>1002/30</td>
+        <td>001/001</td>
+        <td>-</td>
+        <td>3.51</td>
+        <td>3.60</td>
+        <td>3.5 \cite{king2015band}</td>
+    </tr>
+    <tr>
+        <td>GaN/AlN (P)</td>
+        <td>30/39</td>
+        <td>001/001</td>
+        <td>-</td>
+        <td>0.80</td>
+        <td>0.86</td>
+        <td>0.73 \cite{sang2014band}</td>
+    </tr>
+    <tr>
+        <td>AlN/InN (P)</td>
+        <td>39/1180</td>
+        <td>001/001</td>
+        <td>-</td>
+        <td>1.24</td>
+        <td>1.07</td>
+        <td>1.81 \cite{waldrop1996measurement}</td>
+    </tr>
+    <tr>
+        <td>GaN/ZnO (P)</td>
+        <td>30/1195</td>
+        <td>001/001</td>
+        <td>-</td>
+        <td>0.51</td>
+        <td>0.46</td>
+        <td>0.7 \cite{liu2011band}</td>
+    </tr>
+    <tr>
+        <td>MAE</td>
+        <td>-</td>
+        <td>-</td>
+        <td>0.45</td>
+        <td>0.22</td>
+        <td>0.23</td>
+        <td>-</td>
+    </tr>
+    <tr>
+        <td>%%AlN/SiC(P)</td>
+        <td>39/8118</td>
+        <td>001/001</td>
+        <td>1.12</td>
+        <td>1.28</td>
+        <td>1.7 \cite{choi2005band}</td>
+    </tr>
+    <tr>
+        <td>%%AlP/GaP-</td>
+        <td>1327/8184</td>
+        <td>110/110</td>
+        <td>0.64</td>
+        <td>0.64</td>
+        <td>0.24\cite{ribeiro2013all}</td>
+    </tr>
+    <tr>
+        <td>%%ZnSe/ZnTe-</td>
+        <td>96/1198</td>
+        <td>110/110</td>
+        <td>0.13</td>
+        <td>0.06</td>
+        <td>0.97 \cite{rajakarunanayake1988band}</td>
+    </tr>
+    <tr>
+        <td>%%Si/GaP-</td>
+        <td>1002/8184</td>
+        <td>110/110</td>
+        <td>?</td>
+        <td>0.22</td>
+        <td>0.80\cite{perfetti1984experimental}</td>
+    </tr>
+    <tr>
+        <td>%</td>
+        <td></td>
+        <td>Semiconductor-Semiconductor</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>% Si/Au</td>
+        <td>1002/825</td>
+        <td>001/001</td>
+        <td>0.23</td>
+        <td>0.06,0.31</td>
+        <td>0.34 \cite{smith1971schottky}</td>
+    </tr>
+    <tr>
+        <td>% Si/Al-</td>
+        <td>1002/816</td>
+        <td>001/001</td>
+        <td>0.75</td>
+        <td>0.01,0.71</td>
+        <td>0.69 \cite{yu1970characteristics}</td>
+    </tr>
+    <tr>
+        <td>% GaAs/Au</td>
+        <td>1174/825</td>
+        <td>001/001</td>
+        <td>0.60</td>
+        <td>0.55,0.75</td>
+        <td>0.83 \cite{padovani1968thermionic}</td>
+    </tr>
+    <tr>
+        <td>% AlN/GaN</td>
+        <td>39/30</td>
+        <td>001/001</td>
+        <td>0.34</td>
+        <td>0.92</td>
+        <td>1.36 \cite{waldrop1996measurement}</td>
+    </tr>
+    <tr>
+        <td>%CdS/CdSe-</td>
+        <td>1198/1192</td>
+        <td>110/110</td>
+        <td>0.53</td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>% Si/InP-</td>
+        <td>1002/1183</td>
+        <td>110/110</td>
+        <td>0.51</td>
+        <td>0.39 (4*),??0.3</td>
+        <td>0.57 \cite{pollard1991valence}</td>
+    </tr>
+    <tr>
+        <td>% Si/AlAs-</td>
+        <td>1002/1372</td>
+        <td>110/110</td>
+        <td>0.59</td>
+        <td>0.71</td>
+        <td>0.57 \cite{bratina1991epitaxial}</td>
+    </tr>
+</table>
+
+
+<a name="contrib"></a>
+## How to contribute
+
+
+For detailed instructions, please see [Contribution instructions](https://github.com/usnistgov/jarvis/blob/master/Contribution.rst)
+
+<a name="corres"></a>
+## Correspondence
+
+
+Please report bugs as Github issues (https://github.com/usnistgov/alignn/issues) or email to kamal.choudhary@nist.gov.
+
+<a name="fund"></a>
+## Funding support
+
+
+[NIST-MGI](https://www.nist.gov/mgi) and [NIST-CHIPS](https://www.nist.gov/chips).
+
+## Code of conduct
+
+
+Please see [Code of conduct](https://github.com/usnistgov/jarvis/blob/master/CODE_OF_CONDUCT.md)
