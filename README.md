@@ -7,15 +7,28 @@
 * [Introduction](#intro)
 * [Installation](#install)
 * [Generation](#generation)
-  * [Bulk structures](#bulk)
+  * [Bulk structures from scratch](#bulk)
+  * [Bulk structures from databases](#databases)
+  * [Surface/slab structures](#slabs)
+  * [Interface structures](#interfaces)
 * [Calculators and analyzers](#calc)
+  * [Available calculators](#calcs)
+  * [Surface energy](#surfen)
+  * [Vacuum level, ionization potential, electron affinity](#ipeavc)
+  * [Andersen model based band offset](#andersen)
+  * [Alternate Slab Junction (ASJ) model based band offset](#asj)
 * [Benchmarking](#benchmarking)
+   * [Bandgaps](#gaps)
+   * [Surface energy, ionization potential, electron affinity](#sen)
+   * [Band offsets](#boffs)
 * [AI/ML](#aiml)
 * [Webapp](#webapp)
 * [References](#refs)
 * [How to contribute](#contrib)
 * [Correspondence](#corres)
 * [Funding support](#fund)
+
+
 
 <a name="intro"></a>
 ## Introduction
@@ -135,6 +148,7 @@ supercell_2 = Si.make_supercell_matrix([[2,0,0],[0,2,0],[0,0,2]])
 supercell_1.density == supercell_2.density
 ```
 
+<a name="databases"></a>
 ### Bulk structures from existing database
 
 There are more than [50 databases available in the JARVIS-Tools](https://pages.nist.gov/jarvis/databases/). These can be used to easily obtain a structure, e.g. for Silicon (JVASP-1002):
@@ -163,7 +177,7 @@ response_data = jarvisdft_optimade(query = "id=1002")
 ```
 
 
-
+<a name="slabs"></a>
 ### Surface/slab structures
 
 An example of creating, free surfaces is shown below:
@@ -240,7 +254,7 @@ for i in semicons:
                     t1=time.time()
 
 ```
-
+<a name="interfaces"></a>
 ### Interface structures
 
 We generate the interfaces following the Zur et. al. algorithm. The Zur algorithm generates a number of superlattice transformations within a specified maximum surface area and also evaluates the length and angle between film and substrate superlattice vectors to determine if they can match within a tolerance. This algorithm is applicable to different crystal structures and their surface orientations. 
@@ -272,9 +286,14 @@ An example of application of alignn_ff for xy scan is shown below.
 <a name="calc"></a>
 ## Calculators and analyzers
 
+<a name="calcs"></a>
+### Available Calculators
+
 There are more than 10 multi-scale methods available with InterMat. Most of them are open-access such as [QE](https://www.quantum-espresso.org/), [GPAW](https://wiki.fysik.dtu.dk/gpaw/), [LAMMPS](https://www.lammps.org/#gsc.tab=0), [ALIGNN-FF](https://github.com/usnistgov/alignn?tab=readme-ov-file#alignnff), [ASE](https://wiki.fysik.dtu.dk/ase/index.html), [EMT](https://wiki.fysik.dtu.dk/ase/ase/calculators/emt.html) but some could be proprietary such as [VASP](https://www.vasp.at/).
 
-On of the most common quantities to calculate for bulk materials, surfaces and interfaces is energy. All the methods mentioned above allow calculation of energies and have their strength and limitations.
+<a name="surfen"></a>
+### Surface energy
+One of the most common quantities to calculate for bulk materials, surfaces and interfaces is its energy. All the methods mentioned above allow calculation of energies and have their strength and limitations.
 
 An example to calulate energy of FCC aluminum with default (tutorial purposes) settings with QE is as follows:
 
@@ -333,6 +352,8 @@ In the config file, the default value of `sub_job` is `False` which runs calcula
 
 It's important to ensure that the slab model is sufficiently large in the surface plane to minimize the interaction between periodic images and sufficiently thick to separate the two surfaces. Additionally, the choice of boundary conditions, potential energy function (force field for classical simulations or exchange-correlation functional for quantum simulations), and convergence criteria can significantly affect the accuracy of the surface energy calculation.
 
+<a name="ipeavc"></a>
+### Vacuum level, ionization potential, electron affinity
 
 In addition to energetics based quantities such as surface energies , electronic properties of surfaces such as ionization potentials, electron affinities, and independent unit (IU)-based band offsets can be calculated from the electronic structure calculations. It requires electrostatic local potential (such as `LOCPOT`) file. An example for VASP can be given as follows:
 
@@ -342,6 +363,10 @@ phi, cbm, vbm, avg_max, efermi, formula, atoms, fin_en = locpot_mean("LOCPOT")
 ```
 
 We can obtain the DFT VBM and vacuum level (from the maximum value of average electrostatic potential, here `phi`) of surface slabs using DFT. Subtracting the vacuum level from the VBM provides ionization potential (IP) information. Then, we add the bandgap ($E_g$) of the material to the ionization potential to get the electron affinity (EA, $\chi$).
+
+
+<a name="andersen"></a>
+### Andersen model based band offset
 
 IU band alignment, also known as Anderson's rule, predicts semicondcutor band offsets at interfaces using only the IP and EA data from independent surface calculations. For a semiconductor heterojunction between A and B, the conduction band offset can be given by: 
 
@@ -356,7 +381,8 @@ Similarly, the valence band offset is given by:
 ```
 
 
- 
+<a name="asj"></a>
+### Alternate Slab Junction (ASJ) model based band offset
 Similarly, for inerface band offset calculations, its important to have local potentials of each constituent slabs/bulk materials (depending on STJ/ASJ models) as well as the interface.
 
 After determining the optimized geometric structure for the interface using DFT, we can obtain band offset data. As an example, we show a detailed analysis of Si(110)/GaAs(110) and AlN(001)/GaN(001) in Fig. \ref{fig:band_alignn}. In Fig. \ref{fig:band_alignn}a, we show the atomic structure of the ASJ based heterostructure of Si(110)/GaAs(110). The left side (with blue atoms) represents the Si and the right side is the GaAs region. In Fig. \ref{fig:band_alignn}c, we show the electrostatic potential profile, averaged in-plane, of the interface. The approximately sinusoidal profile on both regions represents the presence of atomic layers. The cyan lines show the region used to define the repeat distance, $L$, used for averaging in each material (see below). The red and green lines show the average potential profiles for the left and right parts using the repeat distance. The valence band offset ($\Delta E_v$) of an interface between semiconductor A and B, $\Delta E_v$ is obtained using eq. 4. The difference in the averages for the left and right parts gives the $\Delta V$ term. Now the bulk VBMs of the left and right parts are also calculated to determine the $\Delta E$. The sum of these two quantities gives the band offset that can be compared to experiments. 
