@@ -9,6 +9,7 @@ import re
 from ase.calculators.vasp import VaspChargeDensity
 from scipy.signal import find_peaks
 from jarvis.io.vasp.outputs import Outcar
+from jarvis.io.vasp.outputs import Locpot
 from jarvis.io.vasp.outputs import recast_array_on_uniq_array_elements
 from matplotlib.gridspec import GridSpec
 from jarvis.io.vasp.outputs import Vasprun
@@ -22,6 +23,41 @@ def get_dir(jid="JVASP-1002"):
     pth = jid + "_OPT/opt_" + jid + "/opt_" + jid + "/OUTCAR"
     bandg = Outcar(pth)
     return bandg.bandgap
+
+
+def locpot_mean_jarvis(
+    fname="LOCPOT", axis="X", savefile="locpot.dat", outcar="OUTCAR"
+):
+    outcar = fname.replace("LOCPOT", "OUTCAR")
+    out = Outcar(outcar)
+    cbm = out.bandgap[1]  # - vac_level
+    vbm = out.bandgap[2]  # - vac_level
+    vrun = Vasprun(fname.replace("LOCPOT", "vasprun.xml"))
+    efermi = vrun.efermi  # get_efermi(outcar)
+    atoms = vrun.all_structures[-1]
+    formula = atoms.composition.reduced_formula
+    fin_en = vrun.final_energy
+    if atoms.check_polar:
+        filename1 = (
+            "Polar-"
+            + fname.split("/")[0].replace("R2SCAN", "PBE")
+            + "_"
+            + formula
+            + ".png"
+        )
+    else:
+        filename1 = (
+            fname.split("/")[0].replace("R2SCAN", "PBE")
+            + "_"
+            + formula
+            + ".png"
+        )
+    dif, cbm, vbm, avg_max, efermi, formula, atoms = Locpot(
+        filename=fname
+    ).vac_potential(
+        direction="X", Ef=efermi, cbm=cbm, vbm=vbm, filename=filename1
+    )
+    return dif, cbm, vbm, avg_max, float(efermi), formula, atoms, fin_en
 
 
 def locpot_mean(

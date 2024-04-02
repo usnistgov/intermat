@@ -12,7 +12,7 @@ import pprint
 config_file = os.path.join(os.path.dirname(__file__), "config.json")
 config_dat = loadjson(config_file)
 
-offse_example = os.path.join(os.path.dirname(__file__), "forpytest.zip")
+offset_example = os.path.join(os.path.dirname(__file__), "forpytest.zip")
 
 
 Al = """Al
@@ -93,7 +93,7 @@ def test_eam_lammps():
 
 
 def test_offset():
-    cmd = "unzip " + offse_example
+    cmd = "unzip " + offset_example
     os.system(cmd)
     os.chdir("forpytest")
     for i in glob.glob("Int*/opt_*/opt*/LOCPOT"):
