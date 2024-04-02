@@ -483,15 +483,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>$\gamma$ (OPT)</td>
         <td>$\gamma$ (Exp)</td>
     </tr>
-    <tr>
-        <td>%</td>
-        <td></td>
-        <td>Semiconductor-Semiconductor</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-    </tr>
+
     <tr>
         <td>Si</td>
         <td>1002</td>
@@ -690,15 +682,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>0.38</td>
         <td>-</td>
     </tr>
-    <tr>
-        <td>% ZnSe</td>
-        <td>96</td>
-        <td>110</td>
-        <td>5.67</td>
-        <td>6.00</td>
-        <td>5.40</td>
-        <td>4.09</td>
-    </tr>
+
     <tr>
         <td>ZnSe</td>
         <td>96</td>
@@ -974,47 +958,9 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>0.34</td>
         <td>-</td>
     </tr>
-    <tr>
-        <td>%GaP</td>
-        <td>8184</td>
-        <td>110</td>
-        <td>5.46</td>
-        <td>6.0</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>%%AlAs</td>
-        <td>1372</td>
-        <td>110</td>
-        <td>5.32</td>
-        <td>2.62</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>%%GaSb</td>
-        <td>1177</td>
-        <td>110</td>
-        <td>5.12</td>
-        <td>4.76</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>% InAs</td>
-        <td>1186</td>
-        <td>110</td>
-        <td>x</td>
-        <td>4.90</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>% InSb</td>
-        <td>1189</td>
-        <td>110</td>
-        <td>x</td>
-        <td>4.77</td>
-        <td></td>
-    </tr>
 </table>
+
+
 
 
 
