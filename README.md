@@ -497,62 +497,62 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1002</td>
         <td>111</td>
         <td>5.00</td>
-        <td>4.77\cite{dillon1958work}</td>
+        <td>4.77</td>
         <td>4.10</td>
-        <td>4.05\cite{bhattacharya1997semiconductor}</td>
+        <td>4.05</td>
         <td>1.60</td>
-        <td>1.14\cite{messmer1981surface}</td>
+        <td>1.14</td>
     </tr>
     <tr>
         <td>Si</td>
         <td>1002</td>
         <td>110</td>
         <td>5.30</td>
-        <td>4.89\cite{dillon1958work}</td>
+        <td>4.89</td>
         <td>4.10</td>
         <td>-</td>
         <td>1.66</td>
-        <td>1.9\cite{messmer1981surface}</td>
+        <td>1.9</td>
     </tr>
     <tr>
         <td>Si</td>
         <td>1002</td>
         <td>001</td>
         <td>5.64</td>
-        <td>4.92\cite{dillon1958work}</td>
+        <td>4.92</td>
         <td>3.60</td>
         <td>-</td>
         <td>2.22</td>
-        <td>2.13\cite{jaccodine1963surface}</td>
+        <td>2.13</td>
     </tr>
     <tr>
         <td>C</td>
         <td>91</td>
         <td>111</td>
         <td>4.67</td>
-        <td>5.0\cite{holzl2006work}</td>
+        <td>5.0</td>
         <td>-2.9</td>
         <td>-</td>
         <td>5.27</td>
-        <td>5.50\cite{field1981strength}</td>
+        <td>5.50</td>
     </tr>
     <tr>
         <td>Ge</td>
         <td>890</td>
         <td>111</td>
         <td>4.87</td>
-        <td>4.80\cite{gobeli1964photoelectric}</td>
+        <td>4.80</td>
         <td>5.2</td>
-        <td>4.13\cite{milnes2012heterojunctions}</td>
+        <td>4.13</td>
         <td>0.99</td>
-        <td>1.30\cite{jaccodine1963surface}</td>
+        <td>1.30</td>
     </tr>
     <tr>
         <td>SiGe</td>
         <td>105410</td>
         <td>111</td>
         <td>4.93</td>
-        <td>4.08\cite{pouch2015work}</td>
+        <td>4.08</td>
         <td>4.5</td>
         <td>-</td>
         <td>1.36</td>
@@ -563,7 +563,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>8118</td>
         <td>001</td>
         <td>5.26</td>
-        <td>4.85\cite{pelletier1984application}</td>
+        <td>4.85</td>
         <td>1.3</td>
         <td>-</td>
         <td>3.51</td>
@@ -574,20 +574,20 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1174</td>
         <td>110</td>
         <td>4.89</td>
-        <td>4.71\cite{liu2007first}</td>
+        <td>4.71</td>
         <td>4.40</td>
-        <td>4.07\cite{bhattacharya1997semiconductor}</td>
+        <td>4.07</td>
         <td>0.67</td>
-        <td>0.86\cite{messmer1981surface}</td>
+        <td>0.86</td>
     </tr>
     <tr>
         <td>InAs</td>
         <td>1186</td>
         <td>110</td>
         <td>4.85</td>
-        <td>4.90\cite{liu2007first}</td>
+        <td>4.90</td>
         <td>4.9</td>
-        <td>4.9\cite{milnes2012heterojunctions}</td>
+        <td>4.9</td>
         <td>0.57</td>
         <td>-</td>
     </tr>
@@ -596,9 +596,9 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1408</td>
         <td>110</td>
         <td>5.11</td>
-        <td>4.86\cite{liu2007first}</td>
+        <td>4.86</td>
         <td>3.70</td>
-        <td>3.65\cite{milnes2012heterojunctions}</td>
+        <td>3.65</td>
         <td>0.77</td>
         <td>-</td>
     </tr>
@@ -607,9 +607,9 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1177</td>
         <td>110</td>
         <td>4.48</td>
-        <td>4.76\cite{liu2007first}</td>
+        <td>4.76</td>
         <td>3.70</td>
-        <td>4.06\cite{milnes2012heterojunctions}</td>
+        <td>4.06</td>
         <td>0.71</td>
         <td>-</td>
     </tr>
@@ -618,9 +618,9 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>39</td>
         <td>100</td>
         <td>5.56</td>
-        <td>5.35\cite{pelletier1984application}</td>
+        <td>5.35</td>
         <td>1.3</td>
-        <td>2.1 \cite{wu1998electron}</td>
+        <td>2.1</td>
         <td>2.27</td>
         <td>-</td>
     </tr>
@@ -629,9 +629,9 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>30</td>
         <td>100</td>
         <td>5.74</td>
-        <td>5.90\cite{rosa2006first}</td>
+        <td>5.90</td>
         <td>2.8</td>
-        <td>3.3\cite{lin2012experimental}</td>
+        <td>3.3</td>
         <td>1.67</td>
         <td>-</td>
     </tr>
@@ -640,7 +640,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>79204</td>
         <td>110</td>
         <td>6.84</td>
-        <td>7.0\cite{lu2022towards}</td>
+        <td>7.0</td>
         <td>1.4</td>
         <td>-</td>
         <td>2.41</td>
@@ -651,18 +651,18 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1393</td>
         <td>110</td>
         <td>5.31</td>
-        <td>6.0\cite{pelletier1984application}</td>
+        <td>6.0</td>
         <td>4.0</td>
-        <td>4.3\cite{bhattacharya1997semiconductor}</td>
+        <td>4.3</td>
         <td>0.88</td>
-        <td>1.9\cite{messmer1981surface}</td>
+        <td>1.9</td>
     </tr>
     <tr>
         <td>BP</td>
         <td>1312</td>
         <td>110</td>
         <td>5.61</td>
-        <td>5.05\cite{crovetto2022boron}</td>
+        <td>5.05</td>
         <td>2.8</td>
         <td>-</td>
         <td>2.08</td>
@@ -673,9 +673,9 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1183</td>
         <td>110</td>
         <td>5.17</td>
-        <td>4.65\cite{liu2007first}</td>
+        <td>4.65</td>
         <td>4.10</td>
-        <td>4.35\cite{bhattacharya1997semiconductor}</td>
+        <td>4.35</td>
         <td>0.73</td>
         <td>-</td>
     </tr>
@@ -684,7 +684,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1192</td>
         <td>110</td>
         <td>5.70</td>
-        <td>5.35\cite{csik2005density}</td>
+        <td>5.35</td>
         <td>6.4</td>
         <td>-</td>
         <td>0.38</td>
@@ -695,16 +695,16 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>96</td>
         <td>110</td>
         <td>5.67</td>
-        <td>6.00\cite{haase1990characterization}</td>
+        <td>6.00</td>
         <td>5.40</td>
-        <td>4.09\cite{milnes2012heterojunctions}</td>
+        <td>4.09</td>
     </tr>
     <tr>
         <td>ZnSe</td>
         <td>96</td>
         <td>110</td>
         <td>5.67</td>
-        <td>6.00\cite{haase1990characterization}</td>
+        <td>6.00</td>
         <td>5.4</td>
         <td>-</td>
         <td>0.44</td>
@@ -715,9 +715,9 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1198</td>
         <td>110</td>
         <td>5.17</td>
-        <td>5.30\cite{shen2020insights}</td>
+        <td>5.30</td>
         <td>4.10</td>
-        <td>3.5\cite{milnes2012heterojunctions}</td>
+        <td>3.5</td>
         <td>0.36</td>
         <td>-</td>
     </tr>
@@ -726,7 +726,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>816</td>
         <td>111</td>
         <td>4.36</td>
-        <td>4.26\cite{holzl2006work}</td>
+        <td>4.26</td>
         <td>-</td>
         <td>-</td>
         <td>0.82</td>
@@ -737,7 +737,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>825</td>
         <td>111</td>
         <td>5.5</td>
-        <td>5.31\cite{holzl2006work}</td>
+        <td>5.31</td>
         <td>-</td>
         <td>-</td>
         <td>0.90</td>
@@ -748,18 +748,18 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>943</td>
         <td>111</td>
         <td>5.35</td>
-        <td>5.34\cite{holzl2006work}</td>
+        <td>5.34</td>
         <td>-</td>
         <td>-</td>
         <td>2.02</td>
-        <td>2.34\cite{clark1980effect}</td>
+        <td>2.34</td>
     </tr>
     <tr>
         <td>Ag</td>
         <td>813</td>
         <td>001</td>
         <td>4.5</td>
-        <td>4.2\cite{holzl2006work}</td>
+        <td>4.2</td>
         <td>-</td>
         <td>-</td>
         <td>0.99</td>
@@ -770,7 +770,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>867</td>
         <td>001</td>
         <td>4.7</td>
-        <td>5.1\cite{holzl2006work}</td>
+        <td>5.1</td>
         <td>-</td>
         <td>-</td>
         <td>1.47</td>
@@ -781,7 +781,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>963</td>
         <td>111</td>
         <td>5.54</td>
-        <td>5.6\cite{holzl2006work}</td>
+        <td>5.6</td>
         <td>-</td>
         <td>-</td>
         <td>1.57</td>
@@ -792,7 +792,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>972</td>
         <td>001</td>
         <td>5.97</td>
-        <td>5.93\cite{holzl2006work}</td>
+        <td>5.93</td>
         <td>-</td>
         <td>-</td>
         <td>1.94</td>
@@ -803,7 +803,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1029</td>
         <td>100</td>
         <td>3.84</td>
-        <td>4.33\cite{holzl2006work}</td>
+        <td>4.33</td>
         <td>-</td>
         <td>-</td>
         <td>2.27</td>
@@ -814,7 +814,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>919</td>
         <td>100</td>
         <td>3.76</td>
-        <td>3.66\cite{holzl2006work}</td>
+        <td>3.66</td>
         <td>-</td>
         <td>-</td>
         <td>0.35</td>
@@ -825,7 +825,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>931</td>
         <td>001</td>
         <td>2.97</td>
-        <td>2.36\cite{holzl2006work}</td>
+        <td>2.36</td>
         <td>-</td>
         <td>-</td>
         <td>0.10</td>
@@ -836,7 +836,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>802</td>
         <td>111</td>
         <td>3.7</td>
-        <td>3.9\cite{holzl2006work}</td>
+        <td>3.9</td>
         <td>-</td>
         <td>-</td>
         <td>2.02</td>
@@ -847,7 +847,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>858</td>
         <td>001</td>
         <td>5.22</td>
-        <td>5.0\cite{holzl2006work}</td>
+        <td>5.0</td>
         <td>-</td>
         <td>-</td>
         <td>3.49</td>
@@ -858,7 +858,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>984</td>
         <td>001</td>
         <td>5.4</td>
-        <td>4.98\cite{holzl2006work}</td>
+        <td>4.98</td>
         <td>-</td>
         <td>-</td>
         <td>2.46</td>
@@ -869,7 +869,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>901</td>
         <td>100</td>
         <td>5.85</td>
-        <td>5.67\cite{holzl2006work}</td>
+        <td>5.67</td>
         <td>-</td>
         <td>-</td>
         <td>2.77</td>
@@ -880,7 +880,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>934</td>
         <td>100</td>
         <td>3.87</td>
-        <td>4.02\cite{holzl2006work}</td>
+        <td>4.02</td>
         <td>-</td>
         <td>-</td>
         <td>2.41</td>
@@ -891,7 +891,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>981</td>
         <td>100</td>
         <td>4.96</td>
-        <td>4.72\cite{holzl2006work}</td>
+        <td>4.72</td>
         <td>-</td>
         <td>-</td>
         <td>2.87</td>
@@ -902,7 +902,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>21195</td>
         <td>100</td>
         <td>4.17</td>
-        <td>4.53\cite{holzl2006work}</td>
+        <td>4.53</td>
         <td>-</td>
         <td>-</td>
         <td>3.30</td>
@@ -913,7 +913,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1056</td>
         <td>001</td>
         <td>4.27</td>
-        <td>4.24\cite{ashcroft2022solid}</td>
+        <td>4.24</td>
         <td>-</td>
         <td>-</td>
         <td>0.36</td>
@@ -924,18 +924,18 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>837</td>
         <td>001</td>
         <td>4.31</td>
-        <td>4.34\cite{holzl2006work}</td>
+        <td>4.34</td>
         <td>-</td>
         <td>-</td>
         <td>0.65</td>
-        <td>0.43\cite{tran2016surface}</td>
+        <td>0.43</td>
     </tr>
     <tr>
         <td>Cr</td>
         <td>861</td>
         <td>110</td>
         <td>5.04</td>
-        <td>4.5\cite{holzl2006work}</td>
+        <td>4.5</td>
         <td>-</td>
         <td>-</td>
         <td>3.31</td>
@@ -946,7 +946,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>993</td>
         <td>001</td>
         <td>4.64</td>
-        <td>4.7\cite{holzl2006work}</td>
+        <td>4.7</td>
         <td>-</td>
         <td>-</td>
         <td>0.67</td>
@@ -957,7 +957,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1008</td>
         <td>110</td>
         <td>4.82</td>
-        <td>4.42\cite{holzl2006work}</td>
+        <td>4.42</td>
         <td>-</td>
         <td>-</td>
         <td>0.91</td>
@@ -979,7 +979,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>8184</td>
         <td>110</td>
         <td>5.46</td>
-        <td>6.0\cite{pelletier1984application}</td>
+        <td>6.0</td>
         <td></td>
     </tr>
     <tr>
@@ -987,7 +987,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1372</td>
         <td>110</td>
         <td>5.32</td>
-        <td>2.62\cite{liu2007first}</td>
+        <td>2.62</td>
         <td></td>
     </tr>
     <tr>
@@ -995,7 +995,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1177</td>
         <td>110</td>
         <td>5.12</td>
-        <td>4.76\cite{liu2007first}</td>
+        <td>4.76</td>
         <td></td>
     </tr>
     <tr>
@@ -1003,7 +1003,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1186</td>
         <td>110</td>
         <td>x</td>
-        <td>4.90\cite{liu2007first}</td>
+        <td>4.90</td>
         <td></td>
     </tr>
     <tr>
@@ -1011,7 +1011,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1189</td>
         <td>110</td>
         <td>x</td>
-        <td>4.77\cite{liu2007first}</td>
+        <td>4.77</td>
         <td></td>
     </tr>
 </table>
@@ -1035,7 +1035,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1.24</td>
         <td>0.88</td>
         <td>1.04</td>
-        <td>1.35 \cite{di2021band}</td>
+        <td>1.35 </td>
     </tr>
     <tr>
         <td>GaAs/Si</td>
@@ -1044,7 +1044,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>0.30</td>
         <td>0.31</td>
         <td>0.39</td>
-        <td>0.23 \cite{list1987si}</td>
+        <td>0.23 </td>
     </tr>
     <tr>
         <td>CdS/Si</td>
@@ -1053,7 +1053,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>3.22</td>
         <td>1.48</td>
         <td>1.70</td>
-        <td>1.6 \cite{kundu1993chemical}</td>
+        <td>1.6 </td>
     </tr>
     <tr>
         <td>%ZnSe/Si</td>
@@ -1062,7 +1062,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td></td>
         <td></td>
         <td>1.18</td>
-        <td>1.25 \cite{schubert2022physical}</td>
+        <td>1.25 </td>
     </tr>
     <tr>
         <td>AlAs/GaAs</td>
@@ -1071,7 +1071,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>0.60</td>
         <td>0.48</td>
         <td>0.50</td>
-        <td>0.55 \cite{batey1986energy}</td>
+        <td>0.55 </td>
     </tr>
     <tr>
         <td>CdS/CdSe</td>
@@ -1080,7 +1080,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>0.35</td>
         <td>0.10</td>
         <td>0.11</td>
-        <td>0.55 \cite{talapin2003highly}</td>
+        <td>0.55 </td>
     </tr>
     <tr>
         <td>InP/GaAs</td>
@@ -1089,7 +1089,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>0.25</td>
         <td>0.72</td>
         <td>0.75</td>
-        <td>0.19\cite{waldrop1989measurement}</td>
+        <td>0.19</td>
     </tr>
     <tr>
         <td>ZnTe/AlSb</td>
@@ -1098,7 +1098,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>0.8</td>
         <td>0.25</td>
         <td>0.33</td>
-        <td>0.35 \cite{schwartz1990band}</td>
+        <td>0.35 </td>
     </tr>
     <tr>
         <td>CdSe/ZnTe</td>
@@ -1107,7 +1107,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1.8</td>
         <td>0.58</td>
         <td>0.67</td>
-        <td>0.64\cite{yu1991measurement}</td>
+        <td>0.64</td>
     </tr>
     <tr>
         <td>InAs/AlAs</td>
@@ -1116,7 +1116,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.46</td>
         <td>0.39</td>
-        <td>0.5 \cite{arriaga1991electronic}</td>
+        <td>0.5 </td>
     </tr>
     <tr>
         <td>InAs/AlSb</td>
@@ -1125,7 +1125,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.05</td>
         <td>0.16</td>
-        <td>0.09 \cite{nakagawa1989electrical}</td>
+        <td>0.09</td>
     </tr>
     <tr>
         <td>ZnSe/InP</td>
@@ -1134,7 +1134,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.13</td>
         <td>0.18</td>
-        <td>0.41 \cite{lange2020spectroscopic}</td>
+        <td>0.41 </td>
     </tr>
     <tr>
         <td>InAs/InP</td>
@@ -1143,7 +1143,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.11</td>
         <td>0.09</td>
-        <td>0.31\cite{waldrop1989measurement}</td>
+        <td>0.31</td>
     </tr>
     <tr>
         <td>ZnSe/AlAs</td>
@@ -1152,7 +1152,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.38</td>
         <td>0.45</td>
-        <td>0.4 \cite{rubini1998transitivity}</td>
+        <td>0.4 </td>
     </tr>
     <tr>
         <td>GaAs/ZnSe</td>
@@ -1161,7 +1161,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.72</td>
         <td>0.80</td>
-        <td>0.98 \cite{kowalczyk1982measurement}</td>
+        <td>0.98 </td>
     </tr>
     <tr>
         <td>ZnS/Si</td>
@@ -1170,7 +1170,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.92</td>
         <td>1.16</td>
-        <td>1.52 \cite{lew1997electronic}</td>
+        <td>1.52 </td>
     </tr>
     <tr>
         <td>Si/SiC</td>
@@ -1179,7 +1179,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.51</td>
         <td>0.47</td>
-        <td>0.5 \cite{dufour1997sic}</td>
+        <td>0.5 </td>
     </tr>
     <tr>
         <td>GaN/SiC (P)</td>
@@ -1188,7 +1188,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>1.12</td>
         <td>1.37</td>
-        <td>0.70 \cite{rizzi1999aln}</td>
+        <td>0.70 </td>
     </tr>
     <tr>
         <td>Si/AlN (P)</td>
@@ -1197,7 +1197,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>3.51</td>
         <td>3.60</td>
-        <td>3.5 \cite{king2015band}</td>
+        <td>3.5</td>
     </tr>
     <tr>
         <td>GaN/AlN (P)</td>
@@ -1206,7 +1206,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.80</td>
         <td>0.86</td>
-        <td>0.73 \cite{sang2014band}</td>
+        <td>0.73 </td>
     </tr>
     <tr>
         <td>AlN/InN (P)</td>
@@ -1215,7 +1215,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>1.24</td>
         <td>1.07</td>
-        <td>1.81 \cite{waldrop1996measurement}</td>
+        <td>1.81 </td>
     </tr>
     <tr>
         <td>GaN/ZnO (P)</td>
@@ -1224,7 +1224,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>-</td>
         <td>0.51</td>
         <td>0.46</td>
-        <td>0.7 \cite{liu2011band}</td>
+        <td>0.7 </td>
     </tr>
     <tr>
         <td>MAE</td>
@@ -1241,7 +1241,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>001/001</td>
         <td>1.12</td>
         <td>1.28</td>
-        <td>1.7 \cite{choi2005band}</td>
+        <td>1.7 </td>
     </tr>
     <tr>
         <td>%%AlP/GaP-</td>
@@ -1249,7 +1249,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>110/110</td>
         <td>0.64</td>
         <td>0.64</td>
-        <td>0.24\cite{ribeiro2013all}</td>
+        <td>0.24</td>
     </tr>
     <tr>
         <td>%%ZnSe/ZnTe-</td>
@@ -1257,7 +1257,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>110/110</td>
         <td>0.13</td>
         <td>0.06</td>
-        <td>0.97 \cite{rajakarunanayake1988band}</td>
+        <td>0.97 </td>
     </tr>
     <tr>
         <td>%%Si/GaP-</td>
@@ -1265,7 +1265,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>110/110</td>
         <td>?</td>
         <td>0.22</td>
-        <td>0.80\cite{perfetti1984experimental}</td>
+        <td>0.80</td>
     </tr>
     <tr>
         <td>%</td>
@@ -1282,7 +1282,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>001/001</td>
         <td>0.23</td>
         <td>0.06,0.31</td>
-        <td>0.34 \cite{smith1971schottky}</td>
+        <td>0.34 </td>
     </tr>
     <tr>
         <td>% Si/Al-</td>
@@ -1290,7 +1290,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>001/001</td>
         <td>0.75</td>
         <td>0.01,0.71</td>
-        <td>0.69 \cite{yu1970characteristics}</td>
+        <td>0.69 </td>
     </tr>
     <tr>
         <td>% GaAs/Au</td>
@@ -1298,7 +1298,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>001/001</td>
         <td>0.60</td>
         <td>0.55,0.75</td>
-        <td>0.83 \cite{padovani1968thermionic}</td>
+        <td>0.83 </td>
     </tr>
     <tr>
         <td>% AlN/GaN</td>
@@ -1306,7 +1306,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>001/001</td>
         <td>0.34</td>
         <td>0.92</td>
-        <td>1.36 \cite{waldrop1996measurement}</td>
+        <td>1.36 </td>
     </tr>
     <tr>
         <td>%CdS/CdSe-</td>
@@ -1323,7 +1323,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>110/110</td>
         <td>0.51</td>
         <td>0.39 (4*),??0.3</td>
-        <td>0.57 \cite{pollard1991valence}</td>
+        <td>0.57 </td>
     </tr>
     <tr>
         <td>% Si/AlAs-</td>
@@ -1331,7 +1331,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>110/110</td>
         <td>0.59</td>
         <td>0.71</td>
-        <td>0.57 \cite{bratina1991epitaxial}</td>
+        <td>0.57 </td>
     </tr>
 </table>
 
