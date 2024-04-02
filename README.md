@@ -557,15 +557,6 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>1.6 </td>
     </tr>
     <tr>
-        <td>%ZnSe/Si</td>
-        <td>96/1002</td>
-        <td>110/110</td>
-        <td></td>
-        <td></td>
-        <td>1.18</td>
-        <td>1.25 </td>
-    </tr>
-    <tr>
         <td>AlAs/GaAs</td>
         <td>1372/1174</td>
         <td>110/110</td>
@@ -736,104 +727,7 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
         <td>0.23</td>
         <td>-</td>
     </tr>
-    <tr>
-        <td>%%AlN/SiC(P)</td>
-        <td>39/8118</td>
-        <td>001/001</td>
-        <td>1.12</td>
-        <td>1.28</td>
-        <td>1.7 </td>
-    </tr>
-    <tr>
-        <td>%%AlP/GaP-</td>
-        <td>1327/8184</td>
-        <td>110/110</td>
-        <td>0.64</td>
-        <td>0.64</td>
-        <td>0.24</td>
-    </tr>
-    <tr>
-        <td>%%ZnSe/ZnTe-</td>
-        <td>96/1198</td>
-        <td>110/110</td>
-        <td>0.13</td>
-        <td>0.06</td>
-        <td>0.97 </td>
-    </tr>
-    <tr>
-        <td>%%Si/GaP-</td>
-        <td>1002/8184</td>
-        <td>110/110</td>
-        <td>?</td>
-        <td>0.22</td>
-        <td>0.80</td>
-    </tr>
-    <tr>
-        <td>%</td>
-        <td></td>
-        <td>Semiconductor-Semiconductor</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>% Si/Au</td>
-        <td>1002/825</td>
-        <td>001/001</td>
-        <td>0.23</td>
-        <td>0.06,0.31</td>
-        <td>0.34 </td>
-    </tr>
-    <tr>
-        <td>% Si/Al-</td>
-        <td>1002/816</td>
-        <td>001/001</td>
-        <td>0.75</td>
-        <td>0.01,0.71</td>
-        <td>0.69 </td>
-    </tr>
-    <tr>
-        <td>% GaAs/Au</td>
-        <td>1174/825</td>
-        <td>001/001</td>
-        <td>0.60</td>
-        <td>0.55,0.75</td>
-        <td>0.83 </td>
-    </tr>
-    <tr>
-        <td>% AlN/GaN</td>
-        <td>39/30</td>
-        <td>001/001</td>
-        <td>0.34</td>
-        <td>0.92</td>
-        <td>1.36 </td>
-    </tr>
-    <tr>
-        <td>%CdS/CdSe-</td>
-        <td>1198/1192</td>
-        <td>110/110</td>
-        <td>0.53</td>
-        <td></td>
-        <td></td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>% Si/InP-</td>
-        <td>1002/1183</td>
-        <td>110/110</td>
-        <td>0.51</td>
-        <td>0.39 (4*),??0.3</td>
-        <td>0.57 </td>
-    </tr>
-    <tr>
-        <td>% Si/AlAs-</td>
-        <td>1002/1372</td>
-        <td>110/110</td>
-        <td>0.59</td>
-        <td>0.71</td>
-        <td>0.57 </td>
-    </tr>
+
 </table>
 
 
