@@ -1,0 +1,156 @@
+{
+    "calculator_method": "alignn_ff",
+    "film_file_path": "",
+    "substrate_file_path": "",
+    "film_jid": "JVASP-816",
+    "substrate_jid": "JVASP-816",
+    "film_index": "0_0_1",
+    "substrate_index": "0_0_1",
+    "film_thickness": 0,
+    "substrate_thickness": 0,
+    "from_conventional_structure_film": true,
+    "from_conventional_structure_subs": true,
+    "max_area": 300,
+    "atol": 1,
+    "ltol": 0.08,
+    "rotate_xz": false,
+    "seperation": 2.5,
+    "vacuum_interface": 2,
+    "disp_intvl": 0.25,
+    "do_surfaces": true,
+    "copy_files": [],
+    "dataset": "dft_3d",
+    "extra_lines": "\nmodule load vasp/6.3.1\nconda activate my_intermat\n",
+    "sub_job": false,
+    "kp_length": 0,
+    "queue": "rack1,rack2",
+    "verbose": false,
+    "walltime": "30-00:00:00",
+    "gpaw_params": {
+        "basis": "szp(dzp)",
+        "convergence": {
+            "density": 1e-12,
+            "energy": 0.1
+        },
+        "cutoff": 400,
+        "eigensolver": "",
+        "kp_length": 30,
+        "maxiter": 1000,
+        "mode": "lcao",
+        "nbands": "120%",
+        "out_file": "gs.out",
+        "out_gpw": "out.gpw",
+        "parallel": {
+            "augment_grids": true,
+            "domain": 2,
+            "sl_auto": true
+        },
+        "smearing": 0.01,
+        "spinpol": true,
+        "symmetry": "on",
+        "xc": "PBE"
+    },
+    "potential":"tests/Mishin-Ni-Al-Co-2013.eam.alloy",
+    "lammps_params": {
+        "atom_style": "charge",
+        "cmd": "lmp_serial<in.main>out",
+        "control_file": "relax.mod",
+        "lammps_cmd": "lmp_serial<in.main>out",
+        "pair_coeff": "Mishin-Ni-Al-Co-2013.eam.alloy",
+        "pair_style": "eam/alloy"
+    },
+    "qe_params": {
+        "qe_cmd": "pw.x",
+        "qe_params": {
+            "cell": {
+                "cell_dofree": "'all'",
+                "cell_dynamics": "'bfgs'"
+            },
+            "control": {
+                "calculation": "'scf'",
+                "disk_io": "'nowf'",
+                "nstep": 100,
+                "outdir": "'./'",
+                "prefix": "'RELAX'",
+                "pseudo_dir": null,
+                "restart_mode": "'from_scratch'",
+                "tprnfor": ".true.",
+                "tstress": ".true.",
+                "verbosity": "'high'",
+                "wf_collect": ".true."
+            },
+            "electrons": {
+                "conv_thr": "1d-9",
+                "diagonalization": "'david'",
+                "mixing_beta": 0.3,
+                "mixing_mode": "'local-TF'"
+            },
+            "ions": {
+                "ion_dynamics": "'bfgs'"
+            },
+            "system": {
+                "degauss": 0.01,
+                "ecfixed": 44.5,
+                "ecutrho": 250,
+                "ecutwfc": 45,
+                "ibrav": 0,
+                "lda_plus_u": ".false.",
+                "nat": null,
+                "ntyp": null,
+                "occupations": "'smearing'",
+                "q2sigma": 1,
+                "qcutz": 800
+            }
+        }
+    },
+    "tb3_lines": [
+        "using ThreeBodyTB\nusing NPZ\n",
+        "crys = makecrys('POSCAR')\n",
+        "cfinal, tbc, energy, force, stress = relax_structure(crys);\n",
+        "vects, vals, hk, sk, vals0 = ThreeBodyTB.TB.Hk(tbc,[0,0,0])\n",
+        "ThreeBodyTB.TB.write_tb_crys('tbc.xml.gz',tbc)\n",
+        "npzwrite('hk.npz',hk)\n",
+        "npzwrite('sk.npz',sk)\n",
+        "open('energy','w') do file\n",
+        "write(file,string(energy))\n",
+        "end\n",
+        "open('fermi_energy','w') do file\n",
+        "println('efermi',string(tbc.efermi))\n",
+        "write(file,string(tbc.efermi))\n",
+        "end\n",
+        "open('dq','w') do file\n",
+        "println('dq',(ThreeBodyTB.TB.get_dq(tbc)))\n",
+        "write(file,string(ThreeBodyTB.TB.get_dq(tbc)))\n",
+        "end\n",
+        "open('band_summary','w') do file\n",
+        "println('bandst.',(ThreeBodyTB.BandStruct.band_summary(tbc)))\n",
+        "write(file,string(ThreeBodyTB.BandStruct.band_summary(tbc)))\n",
+        "end\n"
+    ],
+    "vasp_params": {
+        "inc": {
+            "AGGAC": 0,
+            "EDIFF": "1E-6",
+            "GGA": "BO",
+            "IBRION": 2,
+            "ISIF": 2,
+            "ISMEAR": 0,
+            "ISPIN": 2,
+            "LCHARG": ".true.",
+            "LORBIT": 11,
+            "LREAL": "Auto",
+            "LUSE_VDW": ".true.",
+            "LVHAR": ".true.",
+            "LVTOT": ".false.",
+            "LWAVE": ".false.",
+            "NELM": 500,
+            "NPAR": 4,
+            "NSW": 500,
+            "PARAM1": 0.1833333333,
+            "PARAM2": 0.22,
+            "PREC": "Accurate",
+            "SIGMA": 0.05
+        },
+        "vasp_cmd": "mpirun vasp_std"
+    }
+}
