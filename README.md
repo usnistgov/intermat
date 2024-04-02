@@ -421,7 +421,10 @@ from intermat.offset import offset, locpot_mean
 
 # Step-1: prepare and submit calculations
 # Si/GaAs, Si/GaP example
-combinations = [["JVASP-1002", "JVASP-1174", [1, 1, 0], [1, 1, 0]], ["JVASP-1002", "JVASP-1327", [1, 1, 0], [1, 1, 0]]]
+combinations = [
+    ["JVASP-1002", "JVASP-1174", [1, 1, 0], [1, 1, 0]],
+    ["JVASP-1002", "JVASP-1327", [1, 1, 0], [1, 1, 0]],
+]
 for i in combinations:
     tol = 1
     seperations = [2.5]  # can have multiple separations
@@ -461,7 +464,6 @@ for i in combinations:
         extra_params=info,
     )
 
-)
 ```
 
 In the above example, we calculate, work of adhesion (`wad`) as well as band offset.
@@ -729,6 +731,19 @@ Calculations of band offsets and band-alignment at semiconductor heterojunctions
     </tr>
 
 </table>
+
+<a name="webapp"></a>
+## Webapp
+
+A preliminary web-app for making heterostructure is available at  [https://jarvis.nist.gov/jarvish/](https://jarvis.nist.gov/jarvish/)
+
+<a name="refs"></a>
+### References
+
+1) [InterMat: Accelerated Band Offset Prediction in Semiconductor Interfaces with DFT and Deep Learning](https://arxiv.org/abs/2401.02021)
+2) [Efficient computational design of two-dimensional van der Waals heterostructures: Band alignment, lattice mismatch, and machine learning](https://journals.aps.org/prmaterials/abstract/10.1103/PhysRevMaterials.7.014009)
+
+For more references see: [https://pages.nist.gov/jarvis/publications/](https://pages.nist.gov/jarvis/publications/)
 
 
 <a name="contrib"></a>
