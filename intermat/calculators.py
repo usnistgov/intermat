@@ -11,8 +11,6 @@ from jarvis.tasks.lammps.lammps import LammpsJob
 from jarvis.tasks.qe.qe import QEjob
 import numpy as np
 from jarvis.core.atoms import Atoms, ase_to_atoms
-from ase.optimize.fire import FIRE
-from ase.constraints import ExpCellFilter
 from jarvis.db.jsonutils import loadjson
 
 
@@ -216,9 +214,9 @@ class Calc(object):
                 if "potential" not in self.extra_params:
                     # Download from
                     # https://doi.org/10.6084/m9.figshare.24187602
-                    self.extra_params["potential"] = (
-                        "Mishin-Ni-Al-Co-2013.eam.alloy"
-                    )
+                    self.extra_params[
+                        "potential"
+                    ] = "Mishin-Ni-Al-Co-2013.eam.alloy"
 
                 from ase.calculators.eam import EAM
 
@@ -308,6 +306,8 @@ class Calc(object):
                 info["atoms"] = ase_to_atoms(atoms)
                 return info  # ,forces,stress
             elif self.relax_atoms and not self.relax_cell:
+                from ase.optimize.fire import FIRE
+
                 optimizer = FIRE
                 dyn = optimizer(atoms)
                 dyn.run(fmax=self.fmax, steps=self.steps)
@@ -317,6 +317,9 @@ class Calc(object):
                 info["atoms"] = atoms
                 return info  # ,forces,stress
             elif self.relax_cell:
+                from ase.optimize.fire import FIRE
+                from ase.constraints import ExpCellFilter
+
                 atoms = ExpCellFilter(atoms)
                 optimizer = FIRE
                 dyn = optimizer(atoms)
