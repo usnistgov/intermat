@@ -145,4 +145,4 @@ if __name__ == "__main__":
         help="Settings file for intermat.",
     )
     args = parser.parse_args(sys.argv[1:])
-    main(config_file=args.config_file)
+    main(config_file_or_dict=args.config_file)
