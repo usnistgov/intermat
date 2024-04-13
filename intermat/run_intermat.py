@@ -21,17 +21,24 @@ def main(config_file_or_dict):
     else:
         config_dat = loadjson(config_file_or_dict)
     # A few default setting check
-    if not os.path.exists(config_dat["lammps_params"]["pair_coeff"]):
+    pprint.pprint(config_dat)
+    if "lammps_params" in config_dat and not os.path.exists(
+        config_dat["lammps_params"]["pair_coeff"]
+    ):
         config_dat["lammps_params"]["pair_coeff"] = os.path.join(
             os.path.dirname(__file__),
             "tests",
             "Mishin-Ni-Al-Co-2013.eam.alloy",
         )
-    if not os.path.exists(config_dat["lammps_params"]["control_file"]):
+    if "lammps_params" in config_dat and not os.path.exists(
+        config_dat["lammps_params"]["control_file"]
+    ):
         config_dat["lammps_params"]["control_file"] = os.path.join(
             os.path.dirname(__file__), "tests", "relax.mod"
         )
-    if not os.path.exists(config_dat["potential"]):
+    if "potential" in config_dat and not os.path.exists(
+        config_dat["potential"]
+    ):
         config_dat["potential"] = os.path.join(
             os.path.dirname(__file__),
             "tests",
