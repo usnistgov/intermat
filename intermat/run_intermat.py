@@ -13,6 +13,7 @@ from intermat.generate import InterfaceCombi
 from intermat.config import IntermatConfig
 from jarvis.db.jsonutils import loadjson
 from jarvis.db.figshare import get_jid_data
+from jarvis.db.jsonutils import dumpjson
 
 
 def main(config_file_or_dict):
@@ -136,10 +137,11 @@ def main(config_file_or_dict):
     t2 = time.time()
     print("Time taken:", t2 - t1)
     info = {}
-    info["syste"] = combined_atoms
+    print("combined_atoms", combined_atoms)
+    info["systems"] = [s.to_dict() for s in combined_atoms]
     info["time_taken"] = t2 - t1
     info["wads"] = wads
-    return wads
+    return info
 
 
 if __name__ == "__main__":
@@ -152,4 +154,5 @@ if __name__ == "__main__":
         help="Settings file for intermat.",
     )
     args = parser.parse_args(sys.argv[1:])
-    main(config_file_or_dict=args.config_file)
+    results = main(config_file_or_dict=args.config_file)
+    dumpjson(data=results, filename="intermat_results.json")
