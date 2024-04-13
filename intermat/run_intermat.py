@@ -95,16 +95,17 @@ def main(config_file_or_dict):
             + " It might be energetically very high/less stable."
         )
         print(combined_atoms[0])
+        combined_atoms = combined_atoms[0]
     else:
         if config.verbose:
             for ii, i in enumerate(combined_atoms):
                 print("Structure ", ii)
                 print(i)
                 print()
-    wads = ""
+    # wads = ""
     if config.calculator_method != "":
         # print("combined_atoms", combined_atoms)
-
+        print("config.calculator_method", config.calculator_method)
         wads = x.calculate_wad(
             method=config.calculator_method,
             do_surfaces=config.do_surfaces,
@@ -116,12 +117,14 @@ def main(config_file_or_dict):
         combined_atoms = Atoms.from_dict(
             x.generated_interfaces[index]["generated_interface"]
         )
-        print("Generated interface:\n", combined_atoms)
-        if config.plot_wads:
-
+        # print("Generated interface:\n", combined_atoms)
+        if config.plot_wads and config.disp_intvl != 0:
+            # xy = np.array(x.xy)
+            # print('xy', xy)
             X = x.X
             Y = x.Y
-
+            # X = xy[:,0]
+            # Y = xy[:,1]
             wads = np.array(wads).reshape(len(X), len(Y))
 
             fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
@@ -137,10 +140,11 @@ def main(config_file_or_dict):
     t2 = time.time()
     print("Time taken:", t2 - t1)
     info = {}
-    print("combined_atoms", combined_atoms)
-    info["systems"] = [s.to_dict() for s in combined_atoms]
+    # print("combined_atoms", combined_atoms)
+    info["systems"] = combined_atoms.to_dict()
     info["time_taken"] = t2 - t1
-    info["wads"] = wads
+    info["wads"] = wads.tolist()
+    print("info", info)
     return info
 
 
