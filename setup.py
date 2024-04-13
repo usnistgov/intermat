@@ -13,7 +13,7 @@ setuptools.setup(
         "numpy>=1.22.0",
         "scipy>=1.6.3",
         "jarvis-tools>=2021.07.19",
-        "alignn",
+        # "alignn",
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -23,6 +23,9 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+    ],
+    scripts=[
+        "intermat/run_intermat.py",
     ],
     python_requires=">=3.8",
 )
