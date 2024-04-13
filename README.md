@@ -1,5 +1,5 @@
 ![alt text](https://github.com/usnistgov/intermat/actions/workflows/main.yml/badge.svg)
-
+[![name](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/gist/knc6/0d9aa89f671687c6e925eea2be9b824a/intermat_gettingstarted.ipynb)
 <!-- [![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/c00ee48c524f5000e7f80a974bc6dc71)
 [![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/debf9cbefa9a290502d73fd3cbc4fd69)
 [![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/7492b51b371a8e9dbaa01d76bb438467)  -->

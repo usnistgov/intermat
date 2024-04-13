@@ -13,6 +13,7 @@ from intermat.generate import InterfaceCombi
 from intermat.config import IntermatConfig
 from jarvis.db.jsonutils import loadjson
 from jarvis.db.figshare import get_jid_data
+from jarvis.db.jsonutils import dumpjson
 
 
 def main(config_file_or_dict):
@@ -21,17 +22,24 @@ def main(config_file_or_dict):
     else:
         config_dat = loadjson(config_file_or_dict)
     # A few default setting check
-    if not os.path.exists(config_dat["lammps_params"]["pair_coeff"]):
+    pprint.pprint(config_dat)
+    if "lammps_params" in config_dat and not os.path.exists(
+        config_dat["lammps_params"]["pair_coeff"]
+    ):
         config_dat["lammps_params"]["pair_coeff"] = os.path.join(
             os.path.dirname(__file__),
             "tests",
             "Mishin-Ni-Al-Co-2013.eam.alloy",
         )
-    if not os.path.exists(config_dat["lammps_params"]["control_file"]):
+    if "lammps_params" in config_dat and not os.path.exists(
+        config_dat["lammps_params"]["control_file"]
+    ):
         config_dat["lammps_params"]["control_file"] = os.path.join(
             os.path.dirname(__file__), "tests", "relax.mod"
         )
-    if not os.path.exists(config_dat["potential"]):
+    if "potential" in config_dat and not os.path.exists(
+        config_dat["potential"]
+    ):
         config_dat["potential"] = os.path.join(
             os.path.dirname(__file__),
             "tests",
@@ -87,6 +95,7 @@ def main(config_file_or_dict):
             + " It might be energetically very high/less stable."
         )
         print(combined_atoms[0])
+        combined_atoms = combined_atoms[0]
     else:
         if config.verbose:
             for ii, i in enumerate(combined_atoms):
@@ -96,7 +105,7 @@ def main(config_file_or_dict):
     wads = ""
     if config.calculator_method != "":
         # print("combined_atoms", combined_atoms)
-
+        print("config.calculator_method", config.calculator_method)
         wads = x.calculate_wad(
             method=config.calculator_method,
             do_surfaces=config.do_surfaces,
@@ -108,12 +117,14 @@ def main(config_file_or_dict):
         combined_atoms = Atoms.from_dict(
             x.generated_interfaces[index]["generated_interface"]
         )
-        print("Generated interface:\n", combined_atoms)
-        if config.plot_wads:
-
+        # print("Generated interface:\n", combined_atoms)
+        if config.plot_wads and config.disp_intvl != 0:
+            # xy = np.array(x.xy)
+            # print('xy', xy)
             X = x.X
             Y = x.Y
-
+            # X = xy[:,0]
+            # Y = xy[:,1]
             wads = np.array(wads).reshape(len(X), len(Y))
 
             fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
@@ -126,13 +137,16 @@ def main(config_file_or_dict):
             # import plotly.graph_objects as go
             # fig = go.Figure(data=[go.Surface(z=wads, x=X, y=Y)])
             # fig.show()
+            wads = wads.tolist()
     t2 = time.time()
     print("Time taken:", t2 - t1)
     info = {}
-    info["syste"] = combined_atoms
+    # print("combined_atoms", combined_atoms)
+    info["systems"] = combined_atoms.to_dict()
     info["time_taken"] = t2 - t1
     info["wads"] = wads
-    return wads
+    print("info", info)
+    return info
 
 
 if __name__ == "__main__":
@@ -145,4 +159,5 @@ if __name__ == "__main__":
         help="Settings file for intermat.",
     )
     args = parser.parse_args(sys.argv[1:])
-    main(config_file=args.config_file)
+    results = main(config_file_or_dict=args.config_file)
+    dumpjson(data=results, filename="intermat_results.json")

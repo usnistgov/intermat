@@ -126,7 +126,7 @@ template_gpaw_params = dict(
     maxiter=100,
     convergence={"energy": 1},
     # convergence={"density": 1e-12, "energy": 1e-1},
-    eigensolver=Davidson(niter=2),
+    # eigensolver=Davidson(niter=2),
     out_file="gs.out",
     out_gpw="out.gpw",
     kp_length=10,
