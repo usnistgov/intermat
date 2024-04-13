@@ -102,7 +102,7 @@ def main(config_file_or_dict):
                 print("Structure ", ii)
                 print(i)
                 print()
-    # wads = ""
+    wads = ""
     if config.calculator_method != "":
         # print("combined_atoms", combined_atoms)
         print("config.calculator_method", config.calculator_method)
@@ -137,13 +137,14 @@ def main(config_file_or_dict):
             # import plotly.graph_objects as go
             # fig = go.Figure(data=[go.Surface(z=wads, x=X, y=Y)])
             # fig.show()
+            wads = wads.tolist()
     t2 = time.time()
     print("Time taken:", t2 - t1)
     info = {}
     # print("combined_atoms", combined_atoms)
     info["systems"] = combined_atoms.to_dict()
     info["time_taken"] = t2 - t1
-    info["wads"] = wads.tolist()
+    info["wads"] = wads
     print("info", info)
     return info
 
