@@ -99,7 +99,7 @@ def test_offset():
     for i in glob.glob("Int*/opt_*/opt*/LOCPOT"):
         phi = offset(fname=i, left_index=2)
         print("phi", phi)
-        assert phi < -0.2
+        assert phi['phi'] < -0.2
         atomdos(
             vrun_file=i.replace("LOCPOT", "vasprun.xml"), num_atoms_include=1
         )
