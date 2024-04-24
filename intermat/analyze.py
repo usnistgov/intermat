@@ -1,3 +1,4 @@
+"""Module for surface and interface analysis."""
 import os
 import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline
@@ -13,21 +14,30 @@ from jarvis.io.vasp.outputs import Locpot
 from jarvis.io.vasp.outputs import recast_array_on_uniq_array_elements
 from matplotlib.gridspec import GridSpec
 from jarvis.io.vasp.outputs import Vasprun
+from jarvis.db.figshare import data
+from jarvis.core.atoms import Atoms
+from jarvis.analysis.defects.surface import Surface
 
-
+dft_3d = data("dft_3d")
 step_size = 10
 
 
 def get_dir(jid="JVASP-1002"):
+    """Get bulk materials calc directory."""
     # pth = jid + "_R2SCAN/r2scan_" + jid + "/r2scan_" + jid + "/OUTCAR"
     pth = jid + "_OPT/opt_" + jid + "/opt_" + jid + "/OUTCAR"
-    bandg = Outcar(pth)
+    if os.path.exists(pth):
+        bandg = Outcar(pth)
+    else:
+        pth = jid + "_R2SCAN/opt_" + jid + "/opt_" + jid + "/OUTCAR"
+        bandg = Outcar(pth)
     return bandg.bandgap
 
 
 def locpot_mean_jarvis(
     fname="LOCPOT", axis="X", savefile="locpot.dat", outcar="OUTCAR"
 ):
+    """Get avg. electro. potential with jarvis-tools."""
     outcar = fname.replace("LOCPOT", "OUTCAR")
     out = Outcar(outcar)
     cbm = out.bandgap[1]  # - vac_level
@@ -63,6 +73,7 @@ def locpot_mean_jarvis(
 def locpot_mean(
     fname="LOCPOT", axis="z", savefile="locpot.dat", outcar="OUTCAR"
 ):
+    """Get avg. electro. potential with ase."""
     outcar = fname.replace("LOCPOT", "OUTCAR")
     out = Outcar(outcar)
 
@@ -107,8 +118,8 @@ def locpot_mean(
     return xvals, mean, out.bandgap[-1]
 
 
-# find best L on grid of 10 points
 def get_best_L(start_L, end_L, S, x_target):
+    """Find best L on grid of 10 points."""
     L = 0
     best = 1000000000.0
     for L_guess in np.arange(
@@ -124,8 +135,8 @@ def get_best_L(start_L, end_L, S, x_target):
     return L
 
 
-# recursively find best L
 def best_L_recursive(start_L, end_L, S, x_target):
+    """Find recursively best L."""
     L_best = 0.0
     L_range = end_L - start_L
     for iter in range(step_size):
@@ -137,9 +148,8 @@ def best_L_recursive(start_L, end_L, S, x_target):
     return L_best
 
 
-# do the actual averaging
-# do the actual averaging
 def do_average(L, x, S):
+    """Do the actual averaging."""
     AVG = []
     XX = []
     for xx in x:
@@ -163,6 +173,7 @@ def do_average(L, x, S):
 
 
 def get_mean_val(x_target, XX, AVG):
+    """Get man val."""
     x_target = np.array(x_target)
     XX = np.array(XX)
     AVG = np.array(AVG)
@@ -177,6 +188,7 @@ def get_mean_val(x_target, XX, AVG):
 
 
 def delta_E(fname=""):
+    """Get deltaE for bulk mats."""
     jid1 = fname.split("_")[0].split("Interface-")[1]
     jid2 = fname.split("_")[1]
     print("jid1, jid2", jid1, jid2)
@@ -189,15 +201,56 @@ def delta_E(fname=""):
 
 
 def get_m_c(x=[], y=[]):
+    """Get least sq. fit."""
     A = vstack([x, ones(len(x))]).T
     m, c = lstsq(A, y)[0]
     return m, c
 
 
-def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=False):
+def check_inerface_polar(fname=""):
+    """Check if interface is polar."""
+    tmp = fname.split("/")[0].split("Interface-")[1].split("_")
+    jid1 = tmp[0]
+    jid2 = tmp[0]
+    film_index = [int(tmp[4]), int(tmp[5]), int(tmp[6])]
+    subs_index = [int(tmp[9]), int(tmp[10]), int(tmp[11])]
+    film_thickness = float(tmp[14])
+    subs_thickness = float(tmp[17])
+    for i in dft_3d:
+        if i["jid"] == jid1:
+            film_atoms = Atoms.from_dict(i["atoms"])
+        if i["jid"] == jid2:
+            subs_atoms = Atoms.from_dict(i["atoms"])
+
+    film_surf = Surface(
+        film_atoms,
+        indices=film_index,
+        from_conventional_structure=True,
+        thickness=film_thickness,
+        # vacuum=vacuum,
+    ).make_surface()
+    subs_surf = Surface(
+        subs_atoms,
+        indices=subs_index,
+        from_conventional_structure=True,
+        thickness=subs_thickness,
+        # vacuum=vacuum,
+    ).make_surface()
+    polar = False
+    if film_surf.check_polar:
+        polar = True
+    if subs_surf.check_polar:
+        polar = True
+    return polar
+
+
+def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=None):
+    """Get valence band offset."""
     if len(x) == 0:
         x, s, _ = locpot_mean(fname)
-
+    if polar is None:
+        polar = check_inerface_polar(fname)
+    print("Check polar", polar)
     deltaE = delta_E(fname)
     S = CubicSpline(x, s)
 
@@ -232,7 +285,7 @@ def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=False):
     # x_target1 = x[ range(50, 100,2) ]
     print("Initial guess left ", L_guess_peaks_left)
     L = best_L_recursive(1.0, L_guess_peaks_left * 1.5, S, x_target1)
-    print("L ", L)
+    print("Lleft ", L)
 
     plt.plot(x, s, c="k")
     XX, AVG = do_average(L, x, S)
@@ -254,9 +307,9 @@ def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=False):
 
     # initial guess right
     L_guess_peaks_right = x_target2[-1] - x_target2[0]
-    print("Initial guess right ", L_guess_peaks_right)
     L = best_L_recursive(1.0, L_guess_peaks_right * 1.5, S, x_target2)
-    print("L ", L)
+    print("Initial guess right ", L_guess_peaks_right)
+    print("Lright ", L)
 
     plt.plot(x, s, c="k")
     XX, AVG = do_average(L, x, S)
@@ -286,6 +339,7 @@ def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=False):
     phi = deltaV + deltaE
     if polar:
         phi = polar_del_V + deltaE
+        deltaV = polar_del_V
     plt.grid(color="gray", ls="-.")
     plt.minorticks_on()
     plt.ylabel("Potential (eV)")
@@ -300,7 +354,16 @@ def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=False):
     # plt.show()
     plt.savefig(filename)
     plt.close()
-    return phi
+    info = {}
+    info["phi"] = phi
+    info["polar"] = polar
+    info["deltaV"] = deltaV
+    info["deltaE"] = deltaE
+    info["L_guess_peaks_right"] = L_guess_peaks_right
+    info["L"] = L
+    info["left_index"] = left_index
+
+    return info  # phi
 
 
 def atomdos(
@@ -308,7 +371,7 @@ def atomdos(
     uniq_colors=["r", "g", "b", "orange", "cyan", "pink"],
     num_atoms_include=None,
 ):
-
+    """Get atom projected DOS."""
     vrun = Vasprun(vrun_file)
     # spin_pol = self.is_spin_polarized
     atoms = vrun.all_structures[-1]
