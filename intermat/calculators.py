@@ -214,9 +214,9 @@ class Calc(object):
                 if "potential" not in self.extra_params:
                     # Download from
                     # https://doi.org/10.6084/m9.figshare.24187602
-                    self.extra_params[
-                        "potential"
-                    ] = "Mishin-Ni-Al-Co-2013.eam.alloy"
+                    self.extra_params["potential"] = (
+                        "Mishin-Ni-Al-Co-2013.eam.alloy"
+                    )
 
                 from ase.calculators.eam import EAM
 
@@ -229,8 +229,15 @@ class Calc(object):
                     wt10_path,
                 )
 
-                if "model_path" not in self.extra_params:
+                # print('extra_params here',self.extra_params)
+                if self.extra_params["alignn_params"]["model_path"] == "":
                     model_path = wt10_path()  # wt01_path()
+
+                else:
+                    model_path = self.extra_params["alignn_params"][
+                        "model_path"
+                    ]
+                # print("model_path here",model_path)
                 calculator = AlignnAtomwiseCalculator(
                     path=model_path, stress_wt=0.3
                 )
