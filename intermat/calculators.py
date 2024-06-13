@@ -237,9 +237,19 @@ class Calc(object):
                     model_path = self.extra_params["alignn_params"][
                         "model_path"
                     ]
+
+                if self.extra_params["alignn_params"]["model_filename"] == "":
+                    model_filename = "best_model.pt"  # wt01_path()
+
+                else:
+                    model_filename = self.extra_params["alignn_params"][
+                        "model_filename"
+                    ]
                 # print("model_path here",model_path)
                 calculator = AlignnAtomwiseCalculator(
-                    path=model_path, stress_wt=0.3
+                    path=model_path,
+                    stress_wt=0.3,
+                    model_filename=model_filename,
                 )
 
             elif self.method == "matgl":
