@@ -238,13 +238,12 @@ class Calc(object):
                         "model_path"
                     ]
 
-                if self.extra_params["alignn_params"]["model_filename"] == "":
-                    model_filename = "best_model.pt"  # wt01_path()
-
-                else:
+                if "model_filename" in self.extra_params["alignn_params"]:
                     model_filename = self.extra_params["alignn_params"][
                         "model_filename"
                     ]
+                else:
+                    model_filename = "best_model.pt"
                 # print("model_path here",model_path)
                 calculator = AlignnAtomwiseCalculator(
                     path=model_path,
