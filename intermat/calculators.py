@@ -173,7 +173,7 @@ class Calc(object):
         relax_atoms=False,
         relax_cell=False,
         method="",
-        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "other"],
+        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "chgnet", "mace", "other"],
         extra_params={},
         fmax=0.01,
         steps=100,
@@ -194,6 +194,8 @@ class Calc(object):
             "ewald",
             "alignn_ff",
             "matgl",
+            "chgnet",
+            "mace",
             "emt",
             "gpaw",
             "other",
@@ -257,6 +259,19 @@ class Calc(object):
 
                 pot = matgl.load_model("M3GNet-MP-2021.2.8-PES")
                 calculator = M3GNetCalculator(pot)
+                
+            elif self.method == "chgnet":
+                from chgnet.model.dynamics import CHGNetCalculator
+                import chgnet
+                
+                calculator = CHGNetCalculator()
+                
+            elif self.method == "mace":
+                from mace.calculators import mace_mp
+                import mace
+
+                calculator = mace_mp()
+                
             elif self.method == "gpaw":
                 from gpaw import GPAW, PW, FermiDirac
 
