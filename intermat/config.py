@@ -155,6 +155,8 @@ class IntermatConfig(BaseSettings):
         "alignn_ff",
         "emt",
         "matgl",
+        "mace",
+        "chgnet",
         "eam_ase",
         "vasp",
         "tb3",
