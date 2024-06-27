@@ -226,14 +226,14 @@ class Calc(object):
             elif self.method == "alignn_ff":
                 from alignn.ff.ff import (
                     AlignnAtomwiseCalculator,
-                    # default_path,
+                    default_path,
                     # wt01_path,
                     wt10_path,
                 )
 
                 # print('extra_params here',self.extra_params)
                 if self.extra_params["alignn_params"]["model_path"] == "":
-                    model_path = wt10_path()  # wt01_path()
+                    model_path = default_path()  # wt01_path()
 
                 else:
                     model_path = self.extra_params["alignn_params"][
