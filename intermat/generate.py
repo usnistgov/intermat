@@ -203,8 +203,10 @@ class InterfaceCombi(object):
             self.xy = [[0, 0]]
         else:
             X, Y = np.mgrid[
-                -0.5 + disp_intvl : 0.5 + disp_intvl : disp_intvl,
-                -0.5 + disp_intvl : 0.5 + disp_intvl : disp_intvl,
+                # -0.5 + disp_intvl : 0.5 + disp_intvl : disp_intvl,
+                # -0.5 + disp_intvl : 0.5 + disp_intvl : disp_intvl,
+                0.0 : 1.0 + disp_intvl : disp_intvl,
+                0.0 : 1.0 + disp_intvl : disp_intvl,
             ]
             xy = np.vstack((X.flatten(), Y.flatten())).T
             self.xy = xy
