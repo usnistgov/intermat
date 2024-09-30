@@ -173,7 +173,7 @@ class Calc(object):
         relax_atoms=False,
         relax_cell=False,
         method="",
-        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "other"],
+        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "chgnet", "mace", "other"],
         extra_params={},
         fmax=0.01,
         steps=100,
@@ -194,6 +194,8 @@ class Calc(object):
             "ewald",
             "alignn_ff",
             "matgl",
+            "chgnet",
+            "mace",
             "emt",
             "gpaw",
             "other",
@@ -214,9 +216,9 @@ class Calc(object):
                 if "potential" not in self.extra_params:
                     # Download from
                     # https://doi.org/10.6084/m9.figshare.24187602
-                    self.extra_params[
-                        "potential"
-                    ] = "Mishin-Ni-Al-Co-2013.eam.alloy"
+                    self.extra_params["potential"] = (
+                        "Mishin-Ni-Al-Co-2013.eam.alloy"
+                    )
 
                 from ase.calculators.eam import EAM
 
@@ -224,15 +226,31 @@ class Calc(object):
             elif self.method == "alignn_ff":
                 from alignn.ff.ff import (
                     AlignnAtomwiseCalculator,
-                    # default_path,
+                    default_path,
                     # wt01_path,
                     wt10_path,
                 )
 
-                if "model_path" not in self.extra_params:
-                    model_path = wt10_path()  # wt01_path()
+                # print('extra_params here',self.extra_params)
+                if self.extra_params["alignn_params"]["model_path"] == "":
+                    model_path = default_path()  # wt01_path()
+
+                else:
+                    model_path = self.extra_params["alignn_params"][
+                        "model_path"
+                    ]
+
+                if "model_filename" in self.extra_params["alignn_params"]:
+                    model_filename = self.extra_params["alignn_params"][
+                        "model_filename"
+                    ]
+                else:
+                    model_filename = "best_model.pt"
+                # print("model_path here",model_path)
                 calculator = AlignnAtomwiseCalculator(
-                    path=model_path, stress_wt=0.3
+                    path=model_path,
+                    stress_wt=0.3,
+                    model_filename=model_filename,
                 )
 
             elif self.method == "matgl":
@@ -241,6 +259,19 @@ class Calc(object):
 
                 pot = matgl.load_model("M3GNet-MP-2021.2.8-PES")
                 calculator = M3GNetCalculator(pot)
+                
+            elif self.method == "chgnet":
+                from chgnet.model.dynamics import CHGNetCalculator
+                import chgnet
+                
+                calculator = CHGNetCalculator()
+                
+            elif self.method == "mace":
+                from mace.calculators import mace_mp
+                import mace
+
+                calculator = mace_mp()
+                
             elif self.method == "gpaw":
                 from gpaw import GPAW, PW, FermiDirac
 

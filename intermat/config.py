@@ -132,6 +132,8 @@ template_gpaw_params = dict(
     kp_length=10,
 )
 
+template_alignn_params = {"model_path": ""}
+
 
 class IntermatConfig(BaseSettings):
     # Generator config
@@ -153,6 +155,8 @@ class IntermatConfig(BaseSettings):
         "alignn_ff",
         "emt",
         "matgl",
+        "mace",
+        "chgnet",
         "eam_ase",
         "vasp",
         "tb3",
@@ -191,5 +195,6 @@ class IntermatConfig(BaseSettings):
     lammps_params: Dict = template_lammps_params
     # Calculator gpaw config
     gpaw_params: Dict = template_gpaw_params
+    alignn_params: Dict = template_alignn_params
     # Calculator eam_ase
     potential: str = ""

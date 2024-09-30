@@ -1,8 +1,5 @@
 ![alt text](https://github.com/usnistgov/intermat/actions/workflows/main.yml/badge.svg)
-[![name](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/gist/knc6/0d9aa89f671687c6e925eea2be9b824a/intermat_gettingstarted.ipynb)
-<!-- [![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/c00ee48c524f5000e7f80a974bc6dc71)
-[![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/debf9cbefa9a290502d73fd3cbc4fd69)
-[![name](https://colab.research.google.com/assets/colab-badge.svg)](https://gist.github.com/knc6/7492b51b371a8e9dbaa01d76bb438467)  -->
+
 ![InterMat Schematic](https://github.com/usnistgov/intermat/blob/intermat/intermat/Schematic.png)
 
 # Table of Contents
@@ -48,6 +45,22 @@ The Interface materials design (InterMat) package ([https://arxiv.org/abs/2401.0
  2) Performing calculations using multi-scale methods such as DFT, MD/FF, ML, TB, QMC, TCAD etc.,
  3) analyzing properties such as equilibrium geometries, energetics, work functions, ionization potentials, electron affinities, band offsets, carrier effective masses, mobilities, and thermal conductivities, classification of heterojunctions, benchmarking calculated properties with experiments,
  4) training machine learning models especially to accelerate interface design.
+
+<a name="google"></a>
+## Google colab notebooks
+
+
+
+
+| Notebooks                                                                                                                                      | Google&nbsp;Colab                                                                                                                                        | Descriptions                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Generating interfaces](https://colab.research.google.com/gist/knc6/0d9aa89f671687c6e925eea2be9b824a/intermat_gettingstarted.ipynb)                                                       | [![Open in Google Colab]](https://colab.research.google.com/gist/knc6/0d9aa89f671687c6e925eea2be9b824a/intermat_gettingstarted.ipynb)                                 | Installation of InterMat and generation of atomistic interface geometries given two similar or different materials and other examples.                                                                                                                                                                                                                                                                        |
+| [Band offset with quantum espresso](https://colab.research.google.com/github/knc6/jarvis-tools-notebooks/blob/master/jarvis-tools-notebooks/BandOffSet_QE_InterMat.ipynb)                                                  | [![Open in Google Colab]](https://colab.research.google.com/github/knc6/jarvis-tools-notebooks/blob/master/jarvis-tools-notebooks/BandOffSet_QE_InterMat.ipynb)                            | Installing Quantum espresso DFT package and calculations for valence band offset.                                                                                                                                                                                                                                                                                                                                 |
+
+
+[Open in Google Colab]: https://colab.research.google.com/assets/colab-badge.svg
+
+
 
 
 
