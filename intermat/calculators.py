@@ -173,7 +173,7 @@ class Calc(object):
         relax_atoms=False,
         relax_cell=False,
         method="",
-        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "chgnet", "mace", "matgl-direct","sevennet","orb","eqV2_31M_omat","eqV2_86M_omat","eqV2_153M_omat","eqV2_31M_omat_mp_salex","eqV2_86M_omat_mp_salex","other"],
+        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "chgnet", "mace", "matgl-direct","sevennet","orb","eqv2_31m_omat","eqv2_86m_omat","eqv2_153m_omat","eqv2_31m_omat_mp_salex","eqv2_86m_omat_mp_salex","other"],
         extra_params={},
         fmax=0.01,
         steps=100,
@@ -199,11 +199,11 @@ class Calc(object):
             "matgl-direct",
             "sevennet",
             "orb",
-            "eqV2_31M_omat",
-            "eqV2_86M_omat",
-            "eqV2_153M_omat",
-            "eqV2_31M_omat_mp_salex",
-            "eqV2_86M_omat_mp_salex",
+            "eqv2_31m_omat",
+            "eqv2_86m_omat",
+            "eqv2_153m_omat",
+            "eqv2_31m_omat_mp_salex",
+            "eqv2_86m_omat_mp_salex",
             "emt",
             "gpaw",
             "other",
@@ -300,31 +300,31 @@ class Calc(object):
                 orbff = pretrained.orb_v2()
                 calculator = ORBCalculator(orbff, device="cpu")
 
-            elif self.method == "eqV2_31M_omat":
+            elif self.method == "eqv2_31m_omat":
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_31M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
                 calculator = OCPCalculator(checkpoint_path)
 
-            elif self.method == "eqV2_86M_omat":
+            elif self.method == "eqv2_86m_omat":
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_86M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
                 calculator = OCPCalculator(checkpoint_path)
 
-            elif self.method == "eqV2_153M_omat":
+            elif self.method == "eqv2_153m_omat":
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_153M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
                 calculator = OCPCalculator(checkpoint_path)
 
-            elif self.method == "eqV2_31M_omat_mp_salex":
+            elif self.method == "eqv2_31m_omat_mp_salex":
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_31M_omat_mp_salex.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
                 calculator = OCPCalculator(checkpoint_path)
 
-            elif self.method == "eqV2_86M_omat_mp_salex":
+            elif self.method == "eqv2_86m_omat_mp_salex":
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_86M_omat_mp_salex.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
