@@ -173,7 +173,7 @@ class Calc(object):
         relax_atoms=False,
         relax_cell=False,
         method="",
-        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "chgnet", "mace", "other"],
+        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "chgnet", "mace", "matgl-direct","sevennet","orb","eqV2_31M_omat","eqV2_86M_omat","eqV2_153M_omat","eqV2_31M_omat_mp_salex","eqV2_86M_omat_mp_salex","other"],
         extra_params={},
         fmax=0.01,
         steps=100,
