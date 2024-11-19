@@ -87,11 +87,6 @@ def test_ewald():
     main(config_dat)
 
 
-def test_eam_lammps():
-    config_dat["calculator_method"] = "lammps"
-    main(config_dat)
-
-
 def test_offset():
     cmd = "unzip " + offset_example
     os.system(cmd)

@@ -98,7 +98,6 @@ dependencies:
   - kim-api=2.3.0=h097297d_1
   - kiwisolver=1.4.5=py310hd41b1e2_1
   - krb5=1.21.3=h659f571_0
-  - lammps=2024.02.07=cpu_py310_hf457879_mpi_openmpi_2
   - lcms2=2.16=hb7c19ff_0
   - ld_impl_linux-64=2.40=hf3520f5_7
   - lerc=4.0.0=h27087fc_0

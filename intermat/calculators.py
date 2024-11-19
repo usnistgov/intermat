@@ -173,7 +173,7 @@ class Calc(object):
         relax_atoms=False,
         relax_cell=False,
         method="",
-        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "chgnet", "mace", "other"],
+        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "chgnet", "mace", "matgl-direct","sevennet","orb","eqv2_31m_omat","eqv2_86m_omat","eqv2_153m_omat","eqv2_31m_omat_mp_salex","eqv2_86m_omat_mp_salex","other"],
         extra_params={},
         fmax=0.01,
         steps=100,
@@ -196,6 +196,14 @@ class Calc(object):
             "matgl",
             "chgnet",
             "mace",
+            "matgl-direct",
+            "sevennet",
+            "orb",
+            "eqv2_31m_omat",
+            "eqv2_86m_omat",
+            "eqv2_153m_omat",
+            "eqv2_31m_omat_mp_salex",
+            "eqv2_86m_omat_mp_salex",
             "emt",
             "gpaw",
             "other",
@@ -258,7 +266,14 @@ class Calc(object):
                 import matgl
 
                 pot = matgl.load_model("M3GNet-MP-2021.2.8-PES")
-                calculator = M3GNetCalculator(pot)
+                calculator = M3GNetCalculator(pot, compute_stress=True, stress_weight=0.01)
+
+            elif self.method == "matgl-direct":
+                from matgl.ext.ase import M3GNetCalculator
+                import matgl
+
+                pot = matgl.load_model("M3GNet-MP-2021.2.8-DIRECT-PES")
+                calculator = M3GNetCalculator(pot, compute_stress=True, stress_weight=0.01)
                 
             elif self.method == "chgnet":
                 from chgnet.model.dynamics import CHGNetCalculator
@@ -271,6 +286,49 @@ class Calc(object):
                 import mace
 
                 calculator = mace_mp()
+
+            elif self.method == "sevennet":
+                from sevenn.sevennet_calculator import SevenNetCalculator
+
+                checkpoint_path = "/SevenNet/pretrained_potentials/SevenNet_0__11July2024/checkpoint_sevennet_0.pth" #Add path to checkpoint here
+                calculator = SevenNetCalculator(checkpoint_path, device="cpu")
+
+            elif self.method == "orb-v2":
+                from orb_models.forcefield import pretrained
+                from orb_models.forcefield.calculator import ORBCalculator
+
+                orbff = pretrained.orb_v2()
+                calculator = ORBCalculator(orbff, device="cpu")
+
+            elif self.method == "eqv2_31m_omat":
+                from fairchem.core import OCPCalculator
+
+                checkpoint_path = "/pretrained_models/eqV2_31M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                calculator = OCPCalculator(checkpoint_path)
+
+            elif self.method == "eqv2_86m_omat":
+                from fairchem.core import OCPCalculator
+
+                checkpoint_path = "/pretrained_models/eqV2_86M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                calculator = OCPCalculator(checkpoint_path)
+
+            elif self.method == "eqv2_153m_omat":
+                from fairchem.core import OCPCalculator
+
+                checkpoint_path = "/pretrained_models/eqV2_153M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                calculator = OCPCalculator(checkpoint_path)
+
+            elif self.method == "eqv2_31m_omat_mp_salex":
+                from fairchem.core import OCPCalculator
+
+                checkpoint_path = "/pretrained_models/eqV2_31M_omat_mp_salex.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                calculator = OCPCalculator(checkpoint_path)
+
+            elif self.method == "eqv2_86m_omat_mp_salex":
+                from fairchem.core import OCPCalculator
+
+                checkpoint_path = "/pretrained_models/eqV2_86M_omat_mp_salex.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                calculator = OCPCalculator(checkpoint_path)
                 
             elif self.method == "gpaw":
                 from gpaw import GPAW, PW, FermiDirac
