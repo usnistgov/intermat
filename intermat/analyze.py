@@ -244,7 +244,7 @@ def check_inerface_polar(fname=""):
     return polar
 
 
-def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=None, deltaE=None):
+def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=None, deltaE=None, filename='offset.png'):
     """Get valence band offset."""
     if len(x) == 0:
         x, s, _ = locpot_mean(fname)
@@ -350,7 +350,8 @@ def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=None, deltaE=None
     # plt.plot(x,[meanval2 for i in range(len(x))],linestyle='-.',color='blue')
     print("meanval ", [meanval1, meanval2], meanval2 - meanval1, phi)
     plt.title("Offset (eV): " + str(round(phi, 2)))
-    filename = "offset_max-" + fname.split("/")[0] + ".png"
+    if filename is None:
+        filename = "offset_max-" + fname.split("/")[0] + ".png"
     print("deltaE", deltaE)
     # plt.show()
     plt.savefig(filename)
