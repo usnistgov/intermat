@@ -244,14 +244,15 @@ def check_inerface_polar(fname=""):
     return polar
 
 
-def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=None):
+def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=None, deltaE=None):
     """Get valence band offset."""
     if len(x) == 0:
         x, s, _ = locpot_mean(fname)
     if polar is None:
         polar = check_inerface_polar(fname)
     print("Check polar", polar)
-    deltaE = delta_E(fname)
+    if deltaE is None:
+        deltaE = delta_E(fname)
     S = CubicSpline(x, s)
 
     max_peaks, properties = find_peaks(s, prominence=1, width=width)
