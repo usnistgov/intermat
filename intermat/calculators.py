@@ -304,31 +304,31 @@ class Calc(object):
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_31M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
-                calculator = OCPCalculator(checkpoint_path)
+                calculator = OCPCalculator(checkpoint_path=checkpoint_path)
 
             elif self.method == "eqv2_86m_omat":
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_86M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
-                calculator = OCPCalculator(checkpoint_path)
+                calculator = OCPCalculator(checkpoint_path=checkpoint_path)
 
             elif self.method == "eqv2_153m_omat":
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_153M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
-                calculator = OCPCalculator(checkpoint_path)
+                calculator = OCPCalculator(checkpoint_path=checkpoint_path)
 
             elif self.method == "eqv2_31m_omat_mp_salex":
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_31M_omat_mp_salex.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
-                calculator = OCPCalculator(checkpoint_path)
+                calculator = OCPCalculator(checkpoint_path=checkpoint_path)
 
             elif self.method == "eqv2_86m_omat_mp_salex":
                 from fairchem.core import OCPCalculator
 
                 checkpoint_path = "/pretrained_models/eqV2_86M_omat_mp_salex.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
-                calculator = OCPCalculator(checkpoint_path)
+                calculator = OCPCalculator(checkpoint_path=checkpoint_path)
                 
             elif self.method == "gpaw":
                 from gpaw import GPAW, PW, FermiDirac
