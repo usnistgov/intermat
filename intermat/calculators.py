@@ -51,6 +51,8 @@ def template_extra_params(method="vasp"):
         info["copy_files"] = copy_files
         info["extra_lines"] = extra_lines
         info["kp_length"] = 30
+        info["cores"] = 16
+        info["pre_job_lines"] = None
         info["sub_job"] = True
         info["walltime"] = "30-00:00:00"
         info["queue"] = "rack1,rack2,rack2e,rack3,rack4,rack4e,rack5,rack6"
@@ -127,6 +129,8 @@ def template_extra_params(method="vasp"):
         info["extra_lines"] = extra_lines
         info["walltime"] = "70-00:00:00"
         info["queue"] = "epyc"
+        info["cores"] = 16
+        info["pre_job_lines"] = None
     elif method == "lammps":
         lammps_params = dict(
             cmd="lmp_serial<in.main>out",
@@ -173,7 +177,24 @@ class Calc(object):
         relax_atoms=False,
         relax_cell=False,
         method="",
-        ase_based=["eam_ase", "alignn_ff", "matgl", "emt", "gpaw", "chgnet", "mace", "matgl-direct","sevennet","orb","eqv2_31m_omat","eqv2_86m_omat","eqv2_153m_omat","eqv2_31m_omat_mp_salex","eqv2_86m_omat_mp_salex","other"],
+        ase_based=[
+            "eam_ase",
+            "alignn_ff",
+            "matgl",
+            "emt",
+            "gpaw",
+            "chgnet",
+            "mace",
+            "matgl-direct",
+            "sevennet",
+            "orb",
+            "eqv2_31m_omat",
+            "eqv2_86m_omat",
+            "eqv2_153m_omat",
+            "eqv2_31m_omat_mp_salex",
+            "eqv2_86m_omat_mp_salex",
+            "other",
+        ],
         extra_params={},
         fmax=0.01,
         steps=100,
@@ -266,21 +287,25 @@ class Calc(object):
                 import matgl
 
                 pot = matgl.load_model("M3GNet-MP-2021.2.8-PES")
-                calculator = M3GNetCalculator(pot, compute_stress=True, stress_weight=0.01)
+                calculator = M3GNetCalculator(
+                    pot, compute_stress=True, stress_weight=0.01
+                )
 
             elif self.method == "matgl-direct":
                 from matgl.ext.ase import M3GNetCalculator
                 import matgl
 
                 pot = matgl.load_model("M3GNet-MP-2021.2.8-DIRECT-PES")
-                calculator = M3GNetCalculator(pot, compute_stress=True, stress_weight=0.01)
-                
+                calculator = M3GNetCalculator(
+                    pot, compute_stress=True, stress_weight=0.01
+                )
+
             elif self.method == "chgnet":
                 from chgnet.model.dynamics import CHGNetCalculator
                 import chgnet
-                
+
                 calculator = CHGNetCalculator()
-                
+
             elif self.method == "mace":
                 from mace.calculators import mace_mp
                 import mace
@@ -290,7 +315,7 @@ class Calc(object):
             elif self.method == "sevennet":
                 from sevenn.sevennet_calculator import SevenNetCalculator
 
-                checkpoint_path = "/SevenNet/pretrained_potentials/SevenNet_0__11July2024/checkpoint_sevennet_0.pth" #Add path to checkpoint here
+                checkpoint_path = "/SevenNet/pretrained_potentials/SevenNet_0__11July2024/checkpoint_sevennet_0.pth"  # Add path to checkpoint here
                 calculator = SevenNetCalculator(checkpoint_path, device="cpu")
 
             elif self.method == "orb-v2":
@@ -303,33 +328,33 @@ class Calc(object):
             elif self.method == "eqv2_31m_omat":
                 from fairchem.core import OCPCalculator
 
-                checkpoint_path = "/pretrained_models/eqV2_31M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                checkpoint_path = "/pretrained_models/eqV2_31M_omat.pt"  # Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
                 calculator = OCPCalculator(checkpoint_path=checkpoint_path)
 
             elif self.method == "eqv2_86m_omat":
                 from fairchem.core import OCPCalculator
 
-                checkpoint_path = "/pretrained_models/eqV2_86M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                checkpoint_path = "/pretrained_models/eqV2_86M_omat.pt"  # Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
                 calculator = OCPCalculator(checkpoint_path=checkpoint_path)
 
             elif self.method == "eqv2_153m_omat":
                 from fairchem.core import OCPCalculator
 
-                checkpoint_path = "/pretrained_models/eqV2_153M_omat.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                checkpoint_path = "/pretrained_models/eqV2_153M_omat.pt"  # Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
                 calculator = OCPCalculator(checkpoint_path=checkpoint_path)
 
             elif self.method == "eqv2_31m_omat_mp_salex":
                 from fairchem.core import OCPCalculator
 
-                checkpoint_path = "/pretrained_models/eqV2_31M_omat_mp_salex.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                checkpoint_path = "/pretrained_models/eqV2_31M_omat_mp_salex.pt"  # Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
                 calculator = OCPCalculator(checkpoint_path=checkpoint_path)
 
             elif self.method == "eqv2_86m_omat_mp_salex":
                 from fairchem.core import OCPCalculator
 
-                checkpoint_path = "/pretrained_models/eqV2_86M_omat_mp_salex.pt" #Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
+                checkpoint_path = "/pretrained_models/eqV2_86M_omat_mp_salex.pt"  # Add path to checkpoint here, must download from https://huggingface.co/fairchem/OMAT24
                 calculator = OCPCalculator(checkpoint_path=checkpoint_path)
-                
+
             elif self.method == "gpaw":
                 from gpaw import GPAW, PW, FermiDirac
 
@@ -485,16 +510,23 @@ class Calc(object):
         # if leng - 25 > 0:
         #    leng = leng - 25
         # print("leng", k1, k2, leng)
-        kp = Kpoints3D().automatic_length_mesh(
-            lattice_mat=atoms.lattice_mat,
-            length=self.extra_params["kp_length"],
-        )
-        [a, b, c] = kp.kpts[0]
-        if "Surf" in jobname:
-            # kp = Kpoints3D(kpoints=[[a, b, c]])
-            kp = Kpoints3D(kpoints=[[a, b, 1]])
+        if (
+            isinstance(self.extra_params["kp_length"], str)
+            and "_" in self.extra_params["kp_length"]
+        ):
+            kp = [int(kk) for kk in self.extra_params["kp_length"].split("_")]
+            kp = Kpoints3D(kpoints=[[kp[0], kp[1], kp[2]]])
         else:
-            kp = Kpoints3D(kpoints=[[a, b, c]])
+            kp = Kpoints3D().automatic_length_mesh(
+                lattice_mat=atoms.lattice_mat,
+                length=self.extra_params["kp_length"],
+            )
+            [a, b, c] = kp.kpts[0]
+            if "Surf" in jobname:
+                # kp = Kpoints3D(kpoints=[[a, b, c]])
+                kp = Kpoints3D(kpoints=[[a, b, 1]])
+            else:
+                kp = Kpoints3D(kpoints=[[a, b, c]])
         # kp = Kpoints3D(kpoints=[[a, b, 1]])
         # Step-1 Make VaspJob
         v = VaspJob(
@@ -538,6 +570,8 @@ class Calc(object):
                 directory=os.getcwd(),
                 submit_cmd=["sbatch", "submit_job"],
                 queue=self.extra_params["queue"],
+                pre_job_lines=self.extra_params["pre_job_lines"],
+                cores=self.extra_params["cores"],
             )
         else:
             print("jobid exists", jobid)
@@ -627,15 +661,22 @@ class Calc(object):
             print("Setting kp_length", kp_length)
         else:
             kp_length = self.extra_params["kp_length"]
-        kp = Kpoints3D().automatic_length_mesh(
-            lattice_mat=atoms.lattice_mat,
-            length=kp_length,
-        )
-        [a, b, c] = kp.kpts[0]
-        if "Surf" in self.jobname:
-            kp = Kpoints3D(kpoints=[[a, b, 1]])
+
+        if isinstance(kp_length, str) and "_" in kp_length:
+            kp = [int(kk) for kk in kp_length.split("_")]
+            kp = Kpoints3D(kpoints=[[kp[0], kp[1], kp[2]]])
         else:
-            kp = Kpoints3D(kpoints=[[a, b, c]])
+            kp = Kpoints3D().automatic_length_mesh(
+                lattice_mat=atoms.lattice_mat,
+                length=kp_length,
+            )
+            [a, b, c] = kp.kpts[0]
+            if "Surf" in jobname:
+                # kp = Kpoints3D(kpoints=[[a, b, c]])
+                kp = Kpoints3D(kpoints=[[a, b, 1]])
+            else:
+                kp = Kpoints3D(kpoints=[[a, b, c]])
+        # kp = Kpoints3D(kpoints=[[a, b, 1]])
 
         # if "qe_params" not in self.extra_params:
         #    self.extra_params = template_extra_params(method="qe")

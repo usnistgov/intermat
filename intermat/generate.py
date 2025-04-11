@@ -10,6 +10,7 @@ from jarvis.analysis.defects.surface import Surface
 from jarvis.core.atoms import Atoms
 from intermat.calculators import Calc
 from tqdm import tqdm
+from jarvis.analysis.structure.spacegroup import Spacegroup3D
 
 # from jarvis.db.figshare import get_jid_data
 # import pandas as pd
@@ -99,6 +100,11 @@ def add_atoms(
     return combined
 
 
+def get_primitive(atoms, symprec=1e-4):
+    spg = Spacegroup3D(atoms, symprec=symprec)
+    return spg.primitive_atoms
+
+
 class InterfaceCombi(object):
     """Module to generate interface combinations."""
 
@@ -135,6 +141,7 @@ class InterfaceCombi(object):
         wads={},
         dataset=[],
         id_tag="jid",
+        get_primitive_interface=True,  # originally False
     ):
         """Initialize class."""
         self.film_mats = film_mats
@@ -145,6 +152,7 @@ class InterfaceCombi(object):
         self.subs_kplengths = subs_kplengths
         self.dataset = dataset
         self.id_tag = id_tag
+        self.get_primitive_interface = get_primitive_interface
         # print("self.film_ids", self.film_ids)
         # print("self.subs_ids", self.subs_ids)
         if not self.dataset:
@@ -198,8 +206,15 @@ class InterfaceCombi(object):
         self.wads = wads
         if working_dir == ".":
             working_dir = str(os.getcwd())
+        # print('self.disp_intvl',type(self.disp_intvl))
+        if isinstance(self.disp_intvl, np.ndarray):
+            self.disp_intvl = list(self.disp_intvl)
+        if isinstance(self.disp_intvl, list):
+            # print('self.disp_intvl',type(self.disp_intvl),len(self.disp_intvl))
 
-        if self.disp_intvl == 0:
+            self.xy = list(self.disp_intvl)
+            # print('self.xy is',self.xy)
+        elif self.disp_intvl == 0:
             self.xy = [[0, 0]]
         else:
             X, Y = np.mgrid[
@@ -530,23 +545,28 @@ class InterfaceCombi(object):
                                         else:
                                             tmp_i = self.film_ids[ii]
                                         name = (
-                                            "Interface-"
+                                            "Intf-"
+                                            # "Interface-"
                                             + str(tmp_i)
                                             + "_"
                                             + str(tmp_j)
+                                            # + "film_miller_"
                                             + "_"
-                                            + "film_miller_"
                                             + "_".join(map(str, film_index))
-                                            + "_sub_miller_"
+                                            # + "_sub_miller_"
+                                            + "_"
                                             + "_".join(map(str, subs_index))
-                                            + "_film_thickness_"
+                                            + "_"
+                                            # + "_film_thickness_"
                                             + str(film_thickness)
-                                            + "_subs_thickness_"
+                                            + "_"
+                                            # + "_subs_thickness_"
                                             + str(subs_thickness)
-                                            + "_seperation_"
+                                            + "_"
+                                            # + "_seperation_"
                                             + str(seperation)
                                             + "_"
-                                            + "disp_"
+                                            # + "disp_"
                                             + "_".join(map(str, dis_tmp))
                                         )
                                         # print("name", name)
@@ -641,17 +661,17 @@ class InterfaceCombi(object):
                                             cartesian=False,
                                             props=props,
                                         )
+                                        if self.get_primitive_interface:
+                                            new_intf = get_primitive(new_intf)
+
                                         # print(
                                         #     "chosen_info",
                                         #     chosen_info["mismatch_u"],
                                         #     ats.num_atoms,
                                         # )
-                                        chosen_info["generated_interface"] = (
+                                        chosen_info["interface"] = (
                                             new_intf.to_dict()
                                         )
-                                        chosen_info["interface"] = chosen_info[
-                                            "interface"
-                                        ].to_dict()
                                         chosen_info["film_kplength"] = (
                                             film_kplength
                                         )
@@ -722,7 +742,7 @@ class InterfaceCombi(object):
             intf_kplength = max(i["film_kplength"], i["subs_kplength"])
             extra_params["kp_length"] = intf_kplength
             # intf_name = i["interface_name"]
-            intf = Atoms.from_dict(i["generated_interface"])
+            intf = Atoms.from_dict(i["interface"])
             # print('intf',intf)
             calc = Calc(
                 method=method,
@@ -775,9 +795,7 @@ def lead_mat_designer(
 
     index = np.argmin(wads)
 
-    atoms = Atoms.from_dict(
-        x.generated_interfaces[index]["generated_interface"]
-    )
+    atoms = Atoms.from_dict(x.generated_interfaces[index]["interface"])
 
     film_index = [0, 0, 1]
     x = InterfaceCombi(
@@ -801,9 +819,7 @@ def lead_mat_designer(
 
     index = np.argmin(wads)
 
-    combined = Atoms.from_dict(
-        x.generated_interfaces[index]["generated_interface"]
-    )
+    combined = Atoms.from_dict(x.generated_interfaces[index]["interface"])
     combined = combined.center(vacuum=1.5)
     lat_mat = combined.lattice_mat
     coords = combined.frac_coords
