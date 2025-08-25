@@ -82,7 +82,7 @@ The Interface materials design (InterMat) package (see [here, published version]
 
 
         git clone https://github.com/usnistgov/intermat.git
-        cd inermat
+        cd intermat
         python setup.py develop
 
 <a name="generation"></a>
