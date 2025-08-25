@@ -774,7 +774,7 @@ For detailed instructions, please see [Contribution instructions](https://github
 ## Correspondence
 
 
-Please report bugs as Github issues (https://github.com/usnistgov/alignn/issues) or email to kamal.choudhary@nist.gov.
+Please report bugs as Github issues (https://github.com/usnistgov/alignn/issues) or email to kevin.garrity@nist.gov.
 
 <a name="fund"></a>
 ## Funding support
