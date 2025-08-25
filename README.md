@@ -321,7 +321,7 @@ One of the most common quantities to calculate for bulk materials, surfaces and 
 An example to calulate energy of FCC aluminum with default (tutorial purposes) settings with QE is as follows:
 
 Here we define an atomic structure of Aluminum and then use [`Calc`](https://github.com/usnistgov/intermat/blob/intermat/intermat/calculators.py#L170) class which can be used for several methods.
-In the method we can switch to `alignn_ff`, 'eam_ase`, `lammps`, `vasp`, 'tb3`, `emt`, `gpaw` etc. Respecive setting parameters are defined in `IntermatConfig` as mentioned above.
+In the method we can switch to `alignn_ff`, `eam_ase`, `lammps`, `vasp`, 'tb3`, `emt`, `gpaw` etc. Respecive setting parameters are defined in `IntermatConfig` as mentioned above.
 
 ``` python
 from intermat.config import IntermatConfig
