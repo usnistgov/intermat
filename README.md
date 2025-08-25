@@ -3,9 +3,6 @@
 ![InterMat Schematic](https://github.com/usnistgov/intermat/blob/intermat/intermat/Schematic.png)
 
 
-⚠️ This repository is no longer maintained.
-For the latest updates and continued development, please visit: https://github.com/atomgptlab/intermat
-
 
 # Table of Contents
 * [Introduction](#intro)
