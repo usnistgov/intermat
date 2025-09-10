@@ -5,6 +5,7 @@ import numpy as np
 import itertools
 from intermat.offset import offset, locpot_mean
 
+#
 # Step-1: prepare and submit calculations
 combinations = [["JVASP-1002", "JVASP-1174", [1, 1, 0], [1, 1, 0]]]
 for i in combinations:
