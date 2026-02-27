@@ -14,6 +14,7 @@ setuptools.setup(
         "scipy>=1.6.3",
         "jarvis-tools>=2021.07.19",
         "pydantic_settings",
+        "spglib"
         # "alignn",
     ],
     long_description=long_description,

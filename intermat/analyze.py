@@ -250,7 +250,7 @@ def offset(fname="", x=[], s=[], width=5, left_index=-1, polar=None):
     if len(x) == 0:
         x, s, _ = locpot_mean(fname)
     if polar is None:
-        polar = check_inerface_polar(fname)
+        polar = check_interface_polar(fname)
     print("Check polar", polar)
     deltaE = delta_E(fname)
     S = CubicSpline(x, s)
