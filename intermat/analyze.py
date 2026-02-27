@@ -18,7 +18,7 @@ from jarvis.db.figshare import data
 from jarvis.core.atoms import Atoms
 from jarvis.analysis.defects.surface import Surface
 
-dft_3d = data("dft_3d")
+#dft_3d = data("dft_3d")
 step_size = 10
 
 
@@ -207,7 +207,7 @@ def get_m_c(x=[], y=[]):
     return m, c
 
 
-def check_inerface_polar(fname=""):
+def check_interface_polar(fname=""):
     """Check if interface is polar."""
     tmp = fname.split("/")[0].split("Interface-")[1].split("_")
     jid1 = tmp[0]
@@ -216,6 +216,7 @@ def check_inerface_polar(fname=""):
     subs_index = [int(tmp[9]), int(tmp[10]), int(tmp[11])]
     film_thickness = float(tmp[14])
     subs_thickness = float(tmp[17])
+    dft_3d = data("dft_3d")
     for i in dft_3d:
         if i["jid"] == jid1:
             film_atoms = Atoms.from_dict(i["atoms"])
