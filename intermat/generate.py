@@ -148,7 +148,11 @@ class InterfaceCombi(object):
         # print("self.film_ids", self.film_ids)
         # print("self.subs_ids", self.subs_ids)
         if not self.dataset:
-            self.dataset = j_data("dft_3d")
+            try:
+                self.dataset = j_data("dft_3d")
+            except Exception:
+                print("fail to load dft_3d")
+
         if not film_mats:
             film_mats = []
             film_kplengths = []

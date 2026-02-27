@@ -8,6 +8,7 @@ from intermat.config import IntermatConfig
 from jarvis.io.vasp.inputs import Poscar
 from intermat.calculators import Calc
 import pprint
+from jarvis.core.atoms import Atoms
 
 config_file = os.path.join(os.path.dirname(__file__), "config.json")
 config_dat = loadjson(config_file)
@@ -59,10 +60,21 @@ if dotest:
 
 def test_gen():
     combinations = [["JVASP-1002", "JVASP-816", [1, 1, 0], [1, 1, 0]]]
+    box = [[2.715, 2.715, 0], [0, 2.715, 2.715], [2.715, 0, 2.715]]
+    coords = [[0, 0, 0], [0.25, 0.25, 0.25]]
+    elements = ["Si", "Si"]
+    Si = Atoms(lattice_mat=box, coords=coords, elements=elements, cartesian=False)
+    box = [[2.715, 2.715, 0], [0, 2.715, 2.715], [2.715, 0, 2.715]]
+    coords = [[0, 0, 0], [0.25, 0.25, 0.25]]
+    elements = ["Ge", "Ge"]
+    Ge = Atoms(lattice_mat=box, coords=coords, elements=elements, cartesian=False)
+
     for i in combinations:
         x = InterfaceCombi(
-            film_ids=[i[0]],
-            subs_ids=[i[1]],
+            film_mats=[Si],
+            subs_mats=[Ge],
+#            film_ids=[i[0]],
+#            subs_ids=[i[1]],
             film_indices=[i[2]],
             subs_indices=[i[3]],
             disp_intvl=0.05,
